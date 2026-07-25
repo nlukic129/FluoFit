@@ -1,0 +1,339 @@
+<style>
+  :root {
+    /* page chrome — theme-aware */
+    --page-bg: #ECEAE4;
+    --page-fg: #211C17;
+    --page-muted: #6E655A;
+    --page-line: rgba(33,28,23,0.12);
+    --page-card: #F5F3EE;
+    /* brand — constant across themes */
+    --gold: #C98A2E;
+    --gold-lum: #F3C67A;
+    --gold-bright: #FFE0A6;
+    /* app screen — its own dark world in both themes */
+    --scr-1: #17130F;
+    --scr-2: #0D0B09;
+    --scr-fg: #F5F0E8;
+    --scr-muted: #A99E8E;
+    --scr-line: rgba(245,240,232,0.10);
+    --box-face: #241E18;
+    --box-face-2: #191410;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --page-bg: #100E0C;
+      --page-fg: #F3EEE6;
+      --page-muted: #9A8F80;
+      --page-line: rgba(243,238,230,0.12);
+      --page-card: #1A1613;
+    }
+  }
+  :root[data-theme="light"] {
+    --page-bg: #ECEAE4; --page-fg: #211C17; --page-muted: #6E655A;
+    --page-line: rgba(33,28,23,0.12); --page-card: #F5F3EE;
+  }
+  :root[data-theme="dark"] {
+    --page-bg: #100E0C; --page-fg: #F3EEE6; --page-muted: #9A8F80;
+    --page-line: rgba(243,238,230,0.12); --page-card: #1A1613;
+  }
+
+  * { box-sizing: border-box; }
+  .wrap {
+    min-height: 100%;
+    background: var(--page-bg);
+    color: var(--page-fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    display: flex; flex-direction: column; align-items: center;
+    gap: 34px; padding: 48px 20px 64px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .intro { max-width: 460px; text-align: center; }
+  .eyebrow {
+    font-size: 11px; letter-spacing: .32em; text-transform: uppercase;
+    color: var(--gold); font-weight: 600; margin: 0 0 12px;
+  }
+  .intro h1 {
+    font-size: clamp(22px, 5vw, 28px); font-weight: 600; letter-spacing: -0.01em;
+    margin: 0 0 10px; text-wrap: balance; line-height: 1.15;
+  }
+  .intro p { margin: 0; color: var(--page-muted); font-size: 14.5px; line-height: 1.55; }
+
+  /* ---------- phone ---------- */
+  .phone {
+    width: 340px; max-width: 92vw; border-radius: 40px; padding: 12px;
+    background: linear-gradient(160deg, #2a241e, #0c0a08);
+    box-shadow: 0 40px 80px -30px rgba(0,0,0,.65), 0 0 0 1px rgba(255,255,255,.04);
+  }
+  .screen {
+    position: relative; overflow: hidden; border-radius: 30px;
+    background: radial-gradient(120% 90% at 50% 12%, var(--scr-1), var(--scr-2) 72%);
+    color: var(--scr-fg);
+    height: 620px; display: flex; flex-direction: column;
+    padding: 26px 22px 22px;
+  }
+  .status { display:flex; justify-content:space-between; align-items:center; font-size:11px; color:var(--scr-muted); letter-spacing:.04em; }
+  .wordmark { text-align:center; margin: 6px 0 2px; }
+  .wordmark b { font-weight: 300; font-size: 26px; letter-spacing: .5em; padding-left: .5em; color: var(--scr-fg); }
+  .boxno { text-align:center; font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--scr-muted); }
+
+  /* ---------- stage / 3D ---------- */
+  .stage { flex: 1; position: relative; display:flex; align-items:center; justify-content:center; perspective: 950px; }
+  .glow {
+    position:absolute; width: 300px; height: 300px; border-radius:50%;
+    background: radial-gradient(circle, rgba(243,198,122,.42), rgba(243,198,122,.10) 45%, transparent 68%);
+    filter: blur(6px); transition: opacity .5s, transform .5s; opacity:.55;
+  }
+  .scene { transform-style: preserve-3d; animation: bob 6s ease-in-out infinite; }
+  .box {
+    --w: 132px; --h: 178px; --d: 92px;
+    position: relative; width: var(--w); height: var(--h);
+    transform-style: preserve-3d;
+    transform: rotateX(-14deg) rotateY(-26deg);
+    animation: turn 22s linear infinite;
+    transition: transform .6s ease;
+  }
+  .face {
+    position:absolute; inset:0; border: 1px solid rgba(0,0,0,.35);
+    background: linear-gradient(155deg, var(--box-face), var(--box-face-2));
+  }
+  .face.front  { width:var(--w); height:var(--h); transform: translateZ(calc(var(--d)/2)); }
+  .face.back   { width:var(--w); height:var(--h); transform: rotateY(180deg) translateZ(calc(var(--d)/2)); }
+  .face.right  { width:var(--d); height:var(--h); left:calc(var(--w)/2 - var(--d)/2); transform: rotateY(90deg) translateZ(calc(var(--w)/2)); background:linear-gradient(155deg,#1d1813,#120e0b); }
+  .face.left   { width:var(--d); height:var(--h); left:calc(var(--w)/2 - var(--d)/2); transform: rotateY(-90deg) translateZ(calc(var(--w)/2)); background:linear-gradient(155deg,#1d1813,#120e0b); }
+  .face.bottom { width:var(--w); height:var(--d); top:calc(var(--h)/2 - var(--d)/2); transform: rotateX(-90deg) translateZ(calc(var(--h)/2)); }
+  .interior {
+    width:var(--w); height:var(--d); top:calc(var(--h)/2 - var(--d)/2); position:absolute;
+    transform: rotateX(-90deg) translateZ(calc(var(--h)/2 - 3px));
+    background: radial-gradient(60% 60% at 50% 40%, #3a2f22, #0a0806);
+  }
+  /* front print */
+  .front .brand { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; }
+  .front .brand span { font-weight:300; letter-spacing:.42em; font-size:19px; padding-left:.42em; color:var(--gold-lum); }
+  .front .brand em { font-style:normal; font-size:8.5px; letter-spacing:.34em; color:var(--scr-muted); text-transform:uppercase; }
+  .front .rule { width:38px; height:1px; background:linear-gradient(90deg,transparent,var(--gold),transparent); }
+  .box.premium .front .brand span { color: var(--gold-bright); text-shadow: 0 0 12px rgba(255,224,166,.5); }
+  .box.premium .face { border-color: rgba(243,198,122,.35); }
+
+  /* lid */
+  .lid {
+    position:absolute; width:var(--w); height:var(--d);
+    top:calc(var(--h)/2 - var(--d)/2); left:0;
+    transform-origin: 50% 0;
+    transform: rotateX(-90deg) translateZ(calc(var(--h)/2 * -1)) rotateX(0deg);
+    transform-style: preserve-3d;
+    transition: transform .7s cubic-bezier(.5,.05,.2,1);
+  }
+  .lid .cap { position:absolute; inset:0; background:linear-gradient(155deg,#2b241c,#1a140f); border:1px solid rgba(0,0,0,.4); }
+  .lid .cap.inner { transform: rotateX(180deg); background:linear-gradient(155deg,#221b14,#140f0b); }
+  .box.open .lid { transform: rotateX(-90deg) translateZ(calc(var(--h)/2 * -1)) rotateX(122deg); }
+  .box.open { transform: rotateX(-14deg) rotateY(-26deg) translateY(6px); }
+
+  /* sachet that rises out */
+  .sachet {
+    position:absolute; left:50%; top:26%; width:46px; height:60px; margin-left:-23px;
+    border-radius:6px; background:linear-gradient(150deg,var(--gold-bright),var(--gold) 70%);
+    box-shadow:0 6px 16px rgba(0,0,0,.4), inset 0 0 0 1px rgba(255,255,255,.25);
+    opacity:0; pointer-events:none;
+  }
+  .sachet::before{content:"";position:absolute;left:6px;right:6px;top:9px;height:1px;background:rgba(0,0,0,.18);box-shadow:0 4px 0 rgba(0,0,0,.12),0 8px 0 rgba(0,0,0,.10);}
+  .sachet.go { animation: rise 1150ms cubic-bezier(.3,.6,.2,1) forwards; }
+
+  .mote { position:absolute; left:50%; top:32%; width:10px; height:10px; margin-left:-5px; border-radius:50%;
+    background:radial-gradient(circle,var(--gold-bright),rgba(243,198,122,.2) 60%,transparent);
+    opacity:0; pointer-events:none; }
+  .mote.go { animation: float-up 1200ms ease-out forwards; }
+
+  .xpfloat { position:absolute; left:50%; top:34%; transform:translateX(-50%); font-size:13px; font-weight:700;
+    color:var(--gold-bright); opacity:0; pointer-events:none; letter-spacing:.02em; }
+  .xpfloat.go { animation: xpUp 1100ms ease-out forwards; }
+
+  /* ---------- stats ---------- */
+  .refill { align-self:center; margin-bottom:8px; font-size:11px; letter-spacing:.06em;
+    padding:5px 11px; border-radius:999px; background:rgba(243,198,122,.14); color:var(--gold-lum);
+    border:1px solid rgba(243,198,122,.3); opacity:0; transform:translateY(4px); transition:.4s; }
+  .refill.show { opacity:1; transform:none; }
+  .refill.arriving { background:rgba(120,200,140,.16); color:#a9e0b6; border-color:rgba(120,200,140,.34); }
+
+  .stats { display:flex; gap:10px; margin:6px 0 16px; }
+  .stat { flex:1; background:rgba(255,255,255,.03); border:1px solid var(--scr-line); border-radius:16px; padding:12px 10px; text-align:center; }
+  .stat .k { font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--scr-muted); }
+  .stat .v { font-size:26px; font-weight:600; margin-top:3px; font-variant-numeric:tabular-nums; line-height:1; }
+  .stat .v small{ font-size:12px; color:var(--scr-muted); font-weight:500;}
+  .flame { color:var(--gold-lum); }
+
+  .levelbar { margin-bottom:16px; }
+  .levelbar .row{ display:flex; justify-content:space-between; font-size:11px; color:var(--scr-muted); margin-bottom:6px; letter-spacing:.04em;}
+  .track{ height:6px; border-radius:999px; background:rgba(255,255,255,.07); overflow:hidden;}
+  .fill{ height:100%; width:0; border-radius:999px; background:linear-gradient(90deg,var(--gold),var(--gold-bright)); transition:width .6s cubic-bezier(.5,.05,.2,1);}
+
+  .cta {
+    width:100%; border:none; border-radius:16px; padding:16px; cursor:pointer;
+    font-size:15px; font-weight:600; font-family:inherit; letter-spacing:.01em;
+    color:#1a1207; background:linear-gradient(180deg,var(--gold-bright),var(--gold-lum));
+    box-shadow:0 10px 24px -8px rgba(243,198,122,.5); transition:transform .12s, filter .2s;
+  }
+  .cta:hover{ filter:brightness(1.05);} .cta:active{ transform:translateY(1px) scale(.995);}
+  .cta:focus-visible{ outline:3px solid var(--gold-bright); outline-offset:3px;}
+  .toast{ position:absolute; left:50%; top:16px; transform:translate(-50%,-14px); background:rgba(20,16,12,.92);
+    border:1px solid rgba(243,198,122,.4); color:var(--gold-bright); font-size:12px; font-weight:600;
+    padding:8px 14px; border-radius:999px; opacity:0; transition:.35s; pointer-events:none; letter-spacing:.03em;}
+  .toast.show{ opacity:1; transform:translate(-50%,0);}
+
+  /* ---------- legend / controls under phone ---------- */
+  .legend{ width:100%; max-width:560px; background:var(--page-card); border:1px solid var(--page-line);
+    border-radius:18px; padding:20px 22px; }
+  .legend h2{ font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:var(--gold); margin:0 0 14px; font-weight:600;}
+  .legend ul{ list-style:none; margin:0; padding:0; display:grid; gap:11px;}
+  .legend li{ display:grid; grid-template-columns:130px 1fr; gap:14px; font-size:13.5px; line-height:1.4; align-items:baseline;}
+  .legend .ev{ color:var(--page-fg); font-weight:600;}
+  .legend .an{ color:var(--page-muted);}
+  @media (max-width:420px){ .legend li{ grid-template-columns:1fr; gap:2px;} }
+  .reset{ background:none; border:none; color:var(--page-muted); font:inherit; font-size:13px; cursor:pointer; text-decoration:underline; text-underline-offset:3px; padding:6px;}
+  .reset:hover{ color:var(--page-fg);}
+  .note{ max-width:560px; font-size:12.5px; color:var(--page-muted); text-align:center; line-height:1.5;}
+
+  @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-9px)} }
+  @keyframes turn { from{transform:rotateX(-14deg) rotateY(-26deg)} to{transform:rotateX(-14deg) rotateY(334deg)} }
+  @keyframes rise { 0%{opacity:0; transform:translateY(18px) scale(.7) rotate(-6deg)} 22%{opacity:1; transform:translateY(-40px) scale(1) rotate(-3deg)} 70%{opacity:1; transform:translateY(-118px) scale(1) rotate(4deg)} 100%{opacity:0; transform:translateY(-176px) scale(.9) rotate(8deg)} }
+  @keyframes float-up { 0%{opacity:0; transform:translateY(0) scale(.6)} 20%{opacity:1} 100%{opacity:0; transform:translateY(-150px) scale(1.6)} }
+  @keyframes xpUp { 0%{opacity:0; transform:translate(-50%,6px)} 25%{opacity:1} 100%{opacity:0; transform:translate(-50%,-56px)} }
+
+  @media (prefers-reduced-motion: reduce) {
+    .scene, .box { animation: none !important; }
+    .sachet.go,.mote.go,.xpfloat.go{ animation-duration:1ms;}
+    * { transition-duration: .01ms !important; }
+  }
+</style>
+
+<div class="wrap">
+  <div class="intro">
+    <p class="eyebrow">FluoFit · prototip interakcije</p>
+    <h1>Kutija koja živi tvoje stanje</h1>
+    <p>Homepage nije dekoracija — to je state machine sa licem. Tapni dugme u telefonu i prođi kroz ceo ciklus: aktivacija → pijenje → refill → prazno → nova kutija.</p>
+  </div>
+
+  <div class="phone">
+    <div class="screen">
+      <div class="toast" id="toast"></div>
+      <div class="status"><span>9:41</span><span>FluoFit</span></div>
+      <div class="wordmark"><b>FluoFit</b></div>
+      <div class="boxno" id="boxno">Kutija #1 · nije aktivirana</div>
+
+      <div class="stage">
+        <div class="glow" id="glow"></div>
+        <div class="scene">
+          <div class="box" id="box">
+            <div class="face back"></div>
+            <div class="face left"></div>
+            <div class="face right"></div>
+            <div class="interior"></div>
+            <div class="face bottom"></div>
+            <div class="lid"><div class="cap"></div><div class="cap inner"></div></div>
+            <div class="face front">
+              <div class="brand"><span>FluoFit</span><i class="rule"></i><em>Daily Complex</em></div>
+            </div>
+            <div class="sachet" id="sachet"></div>
+            <div class="mote" id="mote"></div>
+            <div class="xpfloat" id="xpfloat">+10 XP</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="refill" id="refill">Refill na putu · ostalo 7</div>
+
+      <div class="stats">
+        <div class="stat"><div class="k">Kesica</div><div class="v" id="left">28</div></div>
+        <div class="stat"><div class="k">Streak</div><div class="v"><span class="flame">🔥</span> <span id="streak">0</span></div></div>
+        <div class="stat"><div class="k">Level</div><div class="v" id="level">1</div></div>
+      </div>
+
+      <div class="levelbar">
+        <div class="row"><span>Level <span id="lvl2">1</span></span><span id="xptext">0 / 150 XP</span></div>
+        <div class="track"><div class="fill" id="fill"></div></div>
+      </div>
+
+      <button class="cta" id="cta">Skeniraj kutiju</button>
+    </div>
+  </div>
+
+  <div class="legend">
+    <h2>Šta se mapira na šta</h2>
+    <ul>
+      <li><span class="ev">Skeniraj kutiju</span><span class="an">Zapečaćena kutija se otvara — jednom po kutiji, otključava ekosistem.</span></li>
+      <li><span class="ev">Skeniraj kesicu</span><span class="an">Zrno svetla se izdigne i nestane, brojač pada, +XP i streak.</span></li>
+      <li><span class="ev">Ostalo 7</span><span class="an">Refill se okida — suptilni glow i „na putu" čip.</span></li>
+      <li><span class="ev">Prazno (0)</span><span class="an">Kutija čeka — jasan poziv „skeniraj novu kutiju".</span></li>
+      <li><span class="ev">Level up</span><span class="an">Kutija dobija premium zlatni skin (veže se na „bolja kutija" perk).</span></li>
+    </ul>
+  </div>
+
+  <button class="reset" id="reset">↺ Počni ispočetka</button>
+  <p class="note">Prototip je čist CSS 3D u browseru — samo da osetiš vibe. U app-u bi ovo bio Rive state machine (glatko, lako po bateriji), okidan na iste scan evente.</p>
+</div>
+
+<script>
+(function(){
+  var box=document.getElementById('box'), cta=document.getElementById('cta'),
+      leftEl=document.getElementById('left'), streakEl=document.getElementById('streak'),
+      levelEl=document.getElementById('level'), lvl2=document.getElementById('lvl2'),
+      fill=document.getElementById('fill'), xptext=document.getElementById('xptext'),
+      refill=document.getElementById('refill'), glow=document.getElementById('glow'),
+      boxno=document.getElementById('boxno'), toast=document.getElementById('toast'),
+      sachet=document.getElementById('sachet'), mote=document.getElementById('mote'),
+      xpfloat=document.getElementById('xpfloat');
+
+  var XP_STEP=10, XP_PER_LEVEL=150;
+  var state, left, streak, xp, level, boxNo, tOut, aOut;
+
+  function reset(){
+    state='NEW'; left=28; streak=0; xp=0; level=1; boxNo=1;
+    box.classList.remove('open','premium'); refill.className='refill';
+    render();
+  }
+  function render(){
+    leftEl.textContent=left; streakEl.textContent=streak;
+    levelEl.textContent=level; lvl2.textContent=level;
+    var into=xp % XP_PER_LEVEL;
+    fill.style.width=(into/XP_PER_LEVEL*100)+'%';
+    xptext.textContent=into+' / '+XP_PER_LEVEL+' XP';
+    glow.style.opacity = state==='EMPTY' ? .18 : .55;
+    if(state==='NEW'){ cta.textContent='Skeniraj kutiju'; boxno.textContent='Kutija #'+boxNo+' · nije aktivirana'; }
+    else if(state==='ACTIVE'){ cta.textContent='Skeniraj kesicu'; boxno.textContent='Kutija #'+boxNo+' · aktivna'; }
+    else { cta.textContent='Skeniraj novu kutiju'; boxno.textContent='Kutija #'+boxNo+' · prazna'; }
+  }
+  function say(msg){
+    toast.textContent=msg; toast.classList.add('show');
+    clearTimeout(tOut); tOut=setTimeout(function(){toast.classList.remove('show');},1600);
+  }
+  function pulseGlow(){
+    glow.style.transform='scale(1.18)'; glow.style.opacity='.85';
+    clearTimeout(aOut); aOut=setTimeout(function(){ glow.style.transform=''; render(); },380);
+  }
+  function replay(el){ el.classList.remove('go'); void el.offsetWidth; el.classList.add('go'); }
+
+  cta.addEventListener('click', function(){
+    if(state==='NEW'){
+      box.classList.add('open'); state='ACTIVE'; pulseGlow(); say('Kutija aktivirana ✦'); render(); return;
+    }
+    if(state==='EMPTY'){
+      boxNo++; left=28; state='ACTIVE'; box.classList.remove('open');
+      refill.className='refill';
+      say('Nova kutija stigla ✦');
+      setTimeout(function(){ box.classList.add('open'); pulseGlow(); render(); }, 260);
+      render(); return;
+    }
+    // ACTIVE -> drink
+    if(left>0){
+      left--; streak++; xp+=XP_STEP;
+      replay(sachet); replay(mote); replay(xpfloat); pulseGlow();
+      var newLevel=Math.floor(xp/XP_PER_LEVEL)+1;
+      if(newLevel>level){ level=newLevel; if(level>=3) box.classList.add('premium'); say('Level '+level+' ✦'); }
+      if(left===7){ refill.classList.add('show'); }
+      if(left===0){ state='EMPTY'; box.classList.remove('open'); refill.className='refill show arriving'; refill.textContent='Vreme je za novu kutiju'; }
+      render();
+    }
+  });
+  document.getElementById('reset').addEventListener('click', reset);
+  reset();
+})();
+</script>

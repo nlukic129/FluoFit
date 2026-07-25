@@ -1,0 +1,10 @@
+# OS
+.DS_Store
+**/.DS_Store
+*.log
+
+# Agent / skill tooling (nije deo FluoFit projekta)
+.agents/
+.claude/
+skills-lock.json
+node_modules/
