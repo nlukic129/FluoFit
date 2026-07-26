@@ -1,0 +1,171 @@
+{
+  "FluoFit — 12M plan": {
+    "globals": {
+      "gifted": "2400",
+      "gCogs": "1000",
+      "gPdv": "20",
+      "gPay": "2.5",
+      "reoX": "2",
+      "reoY": "500",
+      "reoZ": "30"
+    },
+    "months": [
+      {
+        "price": 4000,
+        "disc": 0,
+        "comm": 0,
+        "mix": 0,
+        "newSubs": 150,
+        "churn": 25,
+        "fixed": 150000,
+        "adSpend": 1500,
+        "brandBudget": 240000,
+        "newQty": 0,
+        "newPaid": false
+      },
+      {
+        "price": 4000,
+        "disc": 0,
+        "comm": 0,
+        "mix": 0,
+        "newSubs": 180,
+        "churn": 22,
+        "fixed": 150000,
+        "adSpend": 1450,
+        "brandBudget": 200000,
+        "newQty": 0,
+        "newPaid": false
+      },
+      {
+        "price": 4000,
+        "disc": 0,
+        "comm": 0,
+        "mix": 0,
+        "newSubs": 220,
+        "churn": 20,
+        "fixed": 150000,
+        "adSpend": 1400,
+        "brandBudget": 220000,
+        "newQty": 0,
+        "newPaid": false
+      },
+      {
+        "price": 4000,
+        "disc": 0,
+        "comm": 0,
+        "mix": 0,
+        "newSubs": 260,
+        "churn": 18,
+        "fixed": 150000,
+        "adSpend": 1300,
+        "brandBudget": 240000,
+        "newQty": 0,
+        "newPaid": false
+      },
+      {
+        "price": 4000,
+        "disc": 0,
+        "comm": 0,
+        "mix": 0,
+        "newSubs": 300,
+        "churn": 16,
+        "fixed": 150000,
+        "adSpend": 1250,
+        "brandBudget": 250000,
+        "newQty": 2000,
+        "newPaid": true
+      },
+      {
+        "price": 4000,
+        "disc": 0,
+        "comm": 0,
+        "mix": 0,
+        "newSubs": 340,
+        "churn": 14,
+        "fixed": 150000,
+        "adSpend": 1200,
+        "brandBudget": 250000,
+        "newQty": 2000,
+        "newPaid": true
+      },
+      {
+        "price": 4000,
+        "disc": 0,
+        "comm": 0,
+        "mix": 0,
+        "newSubs": 380,
+        "churn": 13,
+        "fixed": 150000,
+        "adSpend": 1150,
+        "brandBudget": 260000,
+        "newQty": 2500,
+        "newPaid": true
+      },
+      {
+        "price": 4000,
+        "disc": 0,
+        "comm": 0,
+        "mix": 0,
+        "newSubs": 420,
+        "churn": 12,
+        "fixed": 150000,
+        "adSpend": 1100,
+        "brandBudget": 260000,
+        "newQty": 2500,
+        "newPaid": true
+      },
+      {
+        "price": 4000,
+        "disc": 0,
+        "comm": 0,
+        "mix": 0,
+        "newSubs": 450,
+        "churn": 11,
+        "fixed": 150000,
+        "adSpend": 1050,
+        "brandBudget": 270000,
+        "newQty": 3000,
+        "newPaid": true
+      },
+      {
+        "price": 4000,
+        "disc": 0,
+        "comm": 0,
+        "mix": 0,
+        "newSubs": 480,
+        "churn": 10,
+        "fixed": 150000,
+        "adSpend": 1000,
+        "brandBudget": 270000,
+        "newQty": 3000,
+        "newPaid": true
+      },
+      {
+        "price": 4000,
+        "disc": 0,
+        "comm": 0,
+        "mix": 0,
+        "newSubs": 510,
+        "churn": 9,
+        "fixed": 150000,
+        "adSpend": 975,
+        "brandBudget": 280000,
+        "newQty": 3500,
+        "newPaid": true
+      },
+      {
+        "price": 4000,
+        "disc": 0,
+        "comm": 0,
+        "mix": 0,
+        "newSubs": 540,
+        "churn": 8,
+        "fixed": 150000,
+        "adSpend": 950,
+        "brandBudget": 280000,
+        "newQty": 3500,
+        "newPaid": true
+      }
+    ]
+  }
+}

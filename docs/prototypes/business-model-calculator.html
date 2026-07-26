@@ -202,17 +202,18 @@
 
     <footer>
       <b>Kako se čita.</b> · <b>Operativni profit</b> = računovodstveni rezultat (odbija COGS kao trošak). ·
-      <b>Mesečni neto keš</b> = koliko stvarno uđe na račun: op. profit + oslobođeni COGS (roba je već u magacinu) − plaćene nove serije. ·
+      <b>Mesečni neto keš</b> = koliko stvarno uđe na račun: op. profit + oslobođeni COGS (roba je već u magacinu) − plaćene porudžbine (keš izlazi kad poručiš). ·
       <br><b>Pretplata.</b> · Model je subscription: svaki aktivni pretplatnik uzme 1 kom/mes. · <b>Aktivni = prošli mesec × (1 − churn) + novi.</b> ·
+      <b>Agent kohorta (lifetime).</b> „Novi preko agenta" (%) deli <b>samo nove</b> pretplatnike na agent-kanal i direktne. Agent-pretplatnik zadržava popust (i agent proviziju) <b>doživotno — svaki mesec dok ne ode usled churn-a</b>, ne samo prvog meseca. Zato agent-baza raste iz meseca u mesec i nosi trajni popust; isporuka i provizija se dele po udelu te dve kohorte. Primer: dođe 200 preko agenta → tih 200 (minus churn) svakog meseca plaćaju −popust% dok ne odu. ·
       <b>Ad spend (akvizicija) = novi pretplatnici × CAC</b> — plaćaš samo dovođenje novih; zadržani donose prihod bez CAC-a. · <b>Marketing budžet (brend)</b> = čist trošak jačanja brenda, ne dovodi korisnike. ·
       <b>Prvi mesec je ceo marketing poklon</b> — i ad spend i brand budžet (0 troška, korisnike ipak dobiješ). · Dodaš mesec → prodato se automatski računa iz churn-a i novih. ·
       <b>Stanje na računu</b> se kumulira kroz mesece. · Zaliha se prenosi: prodato se oduzima, nova serija dodaje. ·
       Ako obim pređe raspoloživu zalihu, prodaja je ograničena zalihom (upozorenje u mesecu). ·
-      Nova serija označena kao <b>plaćena</b> je stvaran odliv keša u tom mesecu; <b>poklon</b> je 0 din.
+      <b>Porudžbina (polje „Poruči"):</b> keš izlazi u mesecu kad <b>poručiš</b>, a roba stiže u magacin posle vremena dostave (30 dana → sledeći mesec; formula: +⌈dana/30⌉ meseci). <b>Poklon</b> porudžbina je 0 din. Roba poručena pri kraju horizonta stiže posle 12. meseca (keš ipak izađe sada).
       <br><b>Nabavka.</b> · <b>Sigurnosni lager</b> = koliko puta prethodne mesečne potrošnje mora uvek ostati na lageru. ·
       <b>Vreme dostave</b> ulazi u reorder tačku (sigurnosni lager + potrošnja tokom dostave), pa alarm skoči dok još imaš zalihe da sačekaš isporuku. ·
       <b>Min. po porudžbini</b> = najmanja količina koju dobavljač prima; po njoj se računa potreban keš i stanje na računu posle porudžbine. ·
-      Kad mesec pređe reorder tačku, dobiješ upozorenje. Porudžbinu upišeš u mesec dostave preko „Nova serija (plaćena)".
+      Kad mesec pređe reorder tačku, dobiješ upozorenje — tada upišeš količinu u polje „Poruči" u TOM mesecu, a roba stiže sama posle vremena dostave.
       <br><b>Scenariji.</b> · Upiši ime i <b>Sačuvaj</b> — scenario se čuva lokalno u browseru (ostaje i kad zatvoriš fajl). · <b>Učitaj</b>/<b>Obriši</b> iz liste. ·
       <b>Izvezi bekap</b> snima sve scenarije u JSON fajl (za čuvanje na disku ili prenos na drugi računar), <b>Uvezi</b> ih vraća. ·
       Napomena: čuvanje je vezano za ovaj fajl i browser — čuvaj povremeno i JSON bekap za sigurnost.
@@ -241,42 +242,51 @@
     { k: "price", label: "MP cena (sa PDV)", step: 100, unit: "din" },
     { k: "disc", label: "Popust (agent)", step: 1, unit: "%" },
     { k: "comm", label: "Provizija", step: 1, unit: "%" },
-    { k: "mix", label: "Mix agent", step: 5, unit: "%" },
+    { k: "mix", label: "Novi preko agenta", step: 5, unit: "%" },
     { k: "newSubs", label: "Novi pretplatnici", step: 10, unit: "kom" },
     { k: "churn", label: "Churn / mes", step: 0.5, unit: "%" },
     { k: "fixed", label: "Fiksni troškovi", step: 25000, unit: "din" },
     { k: "adSpend", label: "Ad spend / kupac (CAC)", step: 50, unit: "din" },
     { k: "brandBudget", label: "Marketing budžet (brend)", step: 10000, unit: "din" },
-    { k: "newQty", label: "Nova serija", step: 100, unit: "kom" }
+    { k: "newQty", label: "Poruči (kom)", step: 100, unit: "kom" }
   ];
 
   function makeMonth(base) {
-    var d = { price: 4000, disc: 10, comm: 10, mix: 50, newSubs: 150, churn: 5, fixed: 200000, adSpend: 500, brandBudget: 0, newQty: 0, newPaid: false };
-    if (base) { for (var k in d) d[k] = base[k]; d.newQty = 0; d.newPaid = false; }
+    var d = { price: 4000, disc: 10, comm: 10, mix: 50, newSubs: 150, churn: 5, fixed: 200000, adSpend: 500, brandBudget: 0, newQty: 0, newPaid: true };
+    if (base) { for (var k in d) d[k] = base[k]; d.newQty = 0; }
     return d;
   }
 
-  function compute(m, invStart, g, subsStart, acqFree) {
+  function compute(m, invStart, g, agentStart, directStart, acqFree, arrivalsQty, lagMonths) {
     var pdv = g.pdv / 100, pay = g.pay / 100, disc = m.disc / 100, comm = m.comm / 100, mix = m.mix / 100;
     var churn = (m.churn || 0) / 100;
     var price = m.price, cogs = g.cogs, fixed = m.fixed;
     var adSpend = m.adSpend || 0, brandBudget = m.brandBudget || 0;
     var newSubs = Math.max(0, m.newSubs || 0);
-    var newQty = Math.max(0, m.newQty || 0), newPaid = !!m.newPaid;
+    var newQty = Math.max(0, m.newQty || 0), newPaid = !!m.newPaid;   // newQty = porudžbina POSLATA ovog meseca
+    var arrivals = Math.max(0, arrivalsQty || 0);                      // roba koja STIŽE ovog meseca (iz ranije porudžbine)
 
-    // Subscription dinamika
-    var churned = subsStart * churn;
+    // Subscription dinamika — DVE kohorte koje se prenose iz meseca u mesec (lifetime).
+    // Agent-pretplatnik zadržava popust + proviziju SVAKI mesec dok ne ode usled churn-a.
+    var subsStart = agentStart + directStart;
+    var agentChurned = agentStart * churn, directChurned = directStart * churn;
+    var churned = agentChurned + directChurned;
+    var newAgent = newSubs * mix;                 // mix = % NOVIH pretplatnika koji dolaze preko agenta
+    var newDirect = newSubs - newAgent;
+    var agentSubs = (agentStart - agentChurned) + newAgent;    // agent-baza se akumulira i traje
+    var directSubs = (directStart - directChurned) + newDirect;
+    var activeSubs = agentSubs + directSubs;      // aktivni pretplatnici = mesečna tražnja (kom)
     var retained = subsStart - churned;
-    var activeSubs = retained + newSubs;          // aktivni pretplatnici = mesečna tražnja (kom)
 
     var vd = 1 + pdv;
     var netD = price / vd, payD = price * pay, contribD = netD - cogs - payD;
     var cust = price * (1 - disc), netA = cust / vd, commA = price * comm, payA = cust * pay, contribA = netA - cogs - commA - payA;
 
-    var avail = invStart + newQty;
+    var avail = invStart + arrivals;
     var demand = activeSubs;
     var sold = Math.min(avail, demand);           // isporučeno, ograničeno zalihom
-    var unitsA = Math.round(sold * mix), unitsD = sold - unitsA;
+    var agentShare = activeSubs > 0 ? agentSubs / activeSubs : 0;  // isporuka se deli po udelu kohorti
+    var unitsA = Math.round(sold * agentShare), unitsD = sold - unitsA;
     var revNet = unitsD * netD + unitsA * netA;
     var cogsSold = sold * cogs;
     var commTot = unitsA * commA;
@@ -287,17 +297,19 @@
     var brandCost = acqFree ? 0 : brandBudget;    // prvi mesec i brand budžet = poklon (0)
     var marketing = acqCost + brandCost;          // ad spend (akvizicija) + brand budžet
     var opProfit = contribTot - fixed - marketing;
-    var newPaidCost = newPaid ? newQty * cogs : 0;
-    var monthCash = opProfit + cogsSold - newPaidCost;
+    var orderCost = newPaid ? newQty * cogs : 0;   // keš izlazi u mesecu kad PORUČIŠ
+    var monthCash = opProfit + cogsSold - orderCost;
     var invEnd = avail - sold;
     var shortage = demand > avail;
 
     return { price: price, cogs: cogs, subsStart: subsStart, churned: churned, retained: retained,
+      agentStart: agentStart, directStart: directStart, agentSubs: agentSubs, directSubs: directSubs,
+      newAgent: newAgent, newDirect: newDirect, discPct: m.disc || 0,
       newSubs: newSubs, activeSubs: activeSubs, demand: demand, sold: sold, unitsA: unitsA, unitsD: unitsD,
       revNet: revNet, cogsSold: cogsSold, commTot: commTot, payTot: payTot, contribTot: contribTot,
       fixed: fixed, marketing: marketing, adSpend: adSpend, brandBudget: brandBudget,
       acqFull: acqFull, acqCost: acqCost, brandCost: brandCost, acqFree: !!acqFree, churnPct: m.churn || 0, opProfit: opProfit,
-      newQty: newQty, newPaid: newPaid, newPaidCost: newPaidCost, monthCash: monthCash,
+      newQty: newQty, newPaid: newPaid, orderCost: orderCost, arrivals: arrivals, lagMonths: lagMonths || 0, monthCash: monthCash,
       invStart: invStart, avail: avail, invEnd: invEnd, shortage: shortage };
   }
 
@@ -309,7 +321,10 @@
     sub += row("Pretplatnici na početku", r.subsStart, { unit: "pretpl." });
     sub += row("− Otkazano (churn " + String(r.churnPct).replace(".", ",") + "%)", r.churned, { neg: true, unit: "pretpl." });
     sub += row("+ Novi pretplatnici (marketing)", r.newSubs, { unit: "pretpl." });
+    sub += row("&nbsp;&nbsp;&nbsp;↳ od toga preko agenta", r.newAgent, { unit: "pretpl." });
     sub += row("Aktivni pretplatnici (= tražnja)", r.activeSubs, { sub: true, unit: "pretpl." });
+    sub += row("&nbsp;&nbsp;&nbsp;↳ agent-baza (−" + String(r.discPct).replace(".", ",") + "% doživotno, dok ne odu)", r.agentSubs, { unit: "pretpl." });
+    sub += row("&nbsp;&nbsp;&nbsp;↳ direktni (puna cena)", r.directSubs, { unit: "pretpl." });
     sub += "</div>";
 
     // P&L
@@ -328,17 +343,18 @@
     // Zaliha
     var zl = '<div class="dblock"><h4>Magacin / zaliha</h4>';
     zl += row("Zaliha na početku", r.invStart, { unit: "kom" });
-    if (r.newQty > 0) zl += row("+ Nova serija (" + (r.newPaid ? "kupljeno" : "poklon") + ")", r.newQty, { unit: "kom" });
-    zl += row("Isporučeno pretplatnicima", r.sold, { unit: "kom", neg: false });
+    if (r.arrivals > 0) zl += row("+ Prispelo (porudžbina od pre " + r.lagMonths + " mes)", r.arrivals, { unit: "kom" });
+    zl += row("Isporučeno pretplatnicima", r.sold, { unit: "kom" });
     zl += row("Zaliha na kraju", r.invEnd, { unit: "kom", sub: true });
     if (r.shortage) zl += '<div class="warn">⚠ Tražnja (' + fmt(r.demand) + " pretpl.) veća od zalihe (" + fmt(r.avail) + " kom) — isporučeno samo " + fmt(r.sold) + " kom.</div>";
+    if (r.newQty > 0) zl += '<div class="warn" style="color:var(--dim)">↗ Poručeno ovog meseca: ' + fmt(r.newQty) + " kom" + (r.newPaid ? " (plaćeno)" : " (poklon)") + (r.lagMonths > 0 ? " — stiže za " + r.lagMonths + " mes" : " — stiže isti mesec") + ".</div>";
     zl += "</div>";
 
     // Keš
     var cs = '<div class="dblock"><h4>Novčani tok — stanje na računu</h4>';
     cs += row("Operativni profit", r.opProfit, { color: opC });
     cs += row("+ Oslobođeni COGS (roba iz magacina)", r.cogsSold, {});
-    if (r.newPaidCost > 0) cs += row("− Kupljena nova serija", r.newPaidCost, { neg: true });
+    if (r.orderCost > 0) cs += row("− Plaćena porudžbina (" + fmt(r.newQty) + " kom" + (r.lagMonths > 0 ? ", stiže za " + r.lagMonths + " mes" : "") + ")", r.orderCost, { neg: true });
     cs += row("Mesečni neto keš", r.monthCash, { sub: true, color: sc(r.monthCash) });
     cs += row("Stanje na računu — kraj meseca", balEnd, { total: true, color: sc(balEnd) });
     cs += "</div>";
@@ -375,7 +391,7 @@
     FIELDS.forEach(function (f) {
       inputs += '<div class="fld"><label>' + f.label + '</label><div class="ib"><input type="number" data-k="' + f.k + '" value="' + m[f.k] + '" step="' + f.step + '"><span class="u">' + f.unit + "</span></div></div>";
     });
-    inputs += '<label class="chk"><input type="checkbox" data-k="newPaid"' + (m.newPaid ? " checked" : "") + "> Nova serija plaćena (inače poklon)</label>";
+    inputs += '<label class="chk"><input type="checkbox" data-k="newPaid"' + (m.newPaid ? " checked" : "") + "> Porudžbina plaćena (inače poklon)</label>";
     inputs += "</div>";
 
     det.innerHTML =
@@ -451,12 +467,14 @@
       pay: parseFloat(document.getElementById("gPay").value) || 0
     };
     var pol = readPolicy();
-    var bal = 0, inv = gifted, sumOp = 0, prevSold = null, subs = 0, lastActive = 0;
+    var lag = Math.max(0, Math.ceil((pol.z || 0) / 30));   // dostava u mesecima (30 dana → 1)
+    var bal = 0, inv = gifted, sumOp = 0, prevSold = null, agentSubs = 0, directSubs = 0, lastActive = 0;
     var flagged = [];
     LEDGER.months.forEach(function (m, i) {
-      var r = compute(m, inv, g, subs, i === 0);
+      var arrivalsQty = (i - lag >= 0) ? (LEDGER.months[i - lag].newQty || 0) : 0;
+      var r = compute(m, inv, g, agentSubs, directSubs, i === 0, arrivalsQty, lag);
       bal += r.monthCash; inv = r.invEnd; sumOp += r.opProfit;
-      subs = r.activeSubs; lastActive = r.activeSubs;
+      agentSubs = r.agentSubs; directSubs = r.directSubs; lastActive = r.activeSubs;
 
       var ps = prevSold === null ? r.sold : prevSold;
       var minStock = pol.x * ps;

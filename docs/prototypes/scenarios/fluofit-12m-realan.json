@@ -1,0 +1,171 @@
+{
+  "FluoFit — 12M realan (affiliate+agent od dana 1)": {
+    "globals": {
+      "gifted": "2400",
+      "gCogs": "1000",
+      "gPdv": "20",
+      "gPay": "2.5",
+      "reoX": "1",
+      "reoY": "500",
+      "reoZ": "30"
+    },
+    "months": [
+      {
+        "price": 4000,
+        "disc": 15,
+        "comm": 10,
+        "mix": 30,
+        "newSubs": 120,
+        "churn": 18,
+        "fixed": 200000,
+        "adSpend": 1000,
+        "brandBudget": 300000,
+        "newQty": 0,
+        "newPaid": false
+      },
+      {
+        "price": 4000,
+        "disc": 15,
+        "comm": 10,
+        "mix": 35,
+        "newSubs": 150,
+        "churn": 16,
+        "fixed": 200000,
+        "adSpend": 950,
+        "brandBudget": 180000,
+        "newQty": 0,
+        "newPaid": false
+      },
+      {
+        "price": 4000,
+        "disc": 15,
+        "comm": 10,
+        "mix": 40,
+        "newSubs": 190,
+        "churn": 14,
+        "fixed": 200000,
+        "adSpend": 900,
+        "brandBudget": 180000,
+        "newQty": 800,
+        "newPaid": true
+      },
+      {
+        "price": 4000,
+        "disc": 15,
+        "comm": 10,
+        "mix": 45,
+        "newSubs": 230,
+        "churn": 13,
+        "fixed": 200000,
+        "adSpend": 850,
+        "brandBudget": 200000,
+        "newQty": 1200,
+        "newPaid": true
+      },
+      {
+        "price": 4000,
+        "disc": 15,
+        "comm": 10,
+        "mix": 50,
+        "newSubs": 270,
+        "churn": 12,
+        "fixed": 200000,
+        "adSpend": 800,
+        "brandBudget": 200000,
+        "newQty": 1400,
+        "newPaid": true
+      },
+      {
+        "price": 4000,
+        "disc": 15,
+        "comm": 10,
+        "mix": 52,
+        "newSubs": 310,
+        "churn": 11,
+        "fixed": 200000,
+        "adSpend": 750,
+        "brandBudget": 220000,
+        "newQty": 1600,
+        "newPaid": true
+      },
+      {
+        "price": 4000,
+        "disc": 15,
+        "comm": 10,
+        "mix": 55,
+        "newSubs": 350,
+        "churn": 10,
+        "fixed": 200000,
+        "adSpend": 700,
+        "brandBudget": 220000,
+        "newQty": 1800,
+        "newPaid": true
+      },
+      {
+        "price": 4000,
+        "disc": 15,
+        "comm": 10,
+        "mix": 55,
+        "newSubs": 390,
+        "churn": 10,
+        "fixed": 200000,
+        "adSpend": 700,
+        "brandBudget": 240000,
+        "newQty": 2000,
+        "newPaid": true
+      },
+      {
+        "price": 4000,
+        "disc": 15,
+        "comm": 10,
+        "mix": 58,
+        "newSubs": 420,
+        "churn": 9,
+        "fixed": 200000,
+        "adSpend": 650,
+        "brandBudget": 240000,
+        "newQty": 2200,
+        "newPaid": true
+      },
+      {
+        "price": 4000,
+        "disc": 15,
+        "comm": 10,
+        "mix": 60,
+        "newSubs": 450,
+        "churn": 9,
+        "fixed": 200000,
+        "adSpend": 650,
+        "brandBudget": 260000,
+        "newQty": 2400,
+        "newPaid": true
+      },
+      {
+        "price": 4000,
+        "disc": 15,
+        "comm": 10,
+        "mix": 60,
+        "newSubs": 480,
+        "churn": 8,
+        "fixed": 200000,
+        "adSpend": 600,
+        "brandBudget": 260000,
+        "newQty": 2600,
+        "newPaid": true
+      },
+      {
+        "price": 4000,
+        "disc": 15,
+        "comm": 10,
+        "mix": 60,
+        "newSubs": 500,
+        "churn": 8,
+        "fixed": 200000,
+        "adSpend": 600,
+        "brandBudget": 280000,
+        "newQty": 2800,
+        "newPaid": true
+      }
+    ]
+  }
+}
