@@ -1,5 +1,12 @@
 # Consumption-driven subscription, billed per Box at shipment
 
+> **Amended (2026-07) by [ADR-0010](./0010-app-optional-scheduled-subscription.md):** the
+> "no calendar billing" rule below is the default, but **not universal**. An app-averse
+> Member may run a **Scheduled refill** (fixed, adjustable cadence — default 4 weeks) — a
+> narrow, deliberate exception, because the calendar's original failure mode (irregular
+> consumers stockpiling) does not apply to the predictable daily base consumer. The
+> consumption-driven model below is unchanged for app users.
+
 ## Context
 
 Most supplement subscriptions bill and ship on a fixed calendar date (e.g. the 1st of each month), which causes customers to stockpile unused product and eventually churn. FluoFit's core differentiator is that a refill ships only when the Member is actually running low.

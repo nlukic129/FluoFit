@@ -28,6 +28,14 @@ _Avoid_: Registration, claiming
 A shipment of the next Box, triggered by the **first** of: 21 Sachet scans (≈7 left), the "running low" button, or the time cap. Time cap = 2 months from Box Activation for scanners, or 2 months from previous delivery for non-scanners. Auto-shipments on the time cap are preceded by a 3-day advance notice with a skip/pause option.
 _Avoid_: Reorder, restock
 
+**Consumption-driven refill**:
+The default **refill mode** for a Member who uses the app: a Refill fires on the first of remaining supply ≤ 7 / "running low" button / time cap ([ADR-0006](./docs/adr/0006-aggregate-supply-and-fraud-floor.md)). Requires scanning to produce the consumption signal. Pairs with the ecosystem layer on (XP/Streak/Perks). Contrast **Scheduled refill**.
+_Avoid_: Smart refill, auto refill (both ambiguous)
+
+**Scheduled refill**:
+The **refill mode** for an app-averse (base) Member: a Refill ships on a **fixed, adjustable cadence** (default 4 weeks), because with no scan signal the calendar is the only honest trigger ([ADR-0010](./docs/adr/0010-app-optional-scheduled-subscription.md)). A narrow, deliberate exception to the "no calendar billing" rule of [ADR-0001](./docs/adr/0001-consumption-driven-subscription.md). Pairs with the ecosystem layer off (no XP). Managed app-less via email/SMS + a magic-link web page. A **refill mode is a property of the Subscription, not a new kind of Member** — a base user is still a Member. Contrast **Consumption-driven refill**.
+_Avoid_: Basic plan, calendar subscription (it is one Subscription, not a separate SKU)
+
 **Member**:
 A person with a FluoFit account and an active Subscription. Membership status gates loyalty perks.
 _Avoid_: User, customer, client, subscriber (pick "Member")

@@ -67,7 +67,8 @@ Extends [ADR-0004](../adr/0004-referral-economics.md). The old fixed ~20% budget
 
 Same mechanics as the existing referral flow ([ADR-0004](../adr/0004-referral-economics.md), [ARCHITECTURE §1](../ARCHITECTURE.md#1-authentication--identity-)):
 
-- First-touch `ref` at signup, locked for the life of that Subscription; retroactive linking only within the grace window (14 days / 2nd Box).
+- First-touch `ref` at signup **or web checkout**, locked for the life of that Subscription; retroactive linking only within the grace window (14 days / 2nd Box).
+- **Commission binds on the sale event, which is scan-independent** ([ADR-0010](../adr/0010-app-optional-scheduled-subscription.md)): for a **paid direct subscriber** (app **or** app-less base) the sale is the **paid order**, so an Agent earns even on a referred Member who never installs the app; only a **gift/retail Standalone Box** uses the Activation scan as the sale event. The commission lifecycle (`Accrued → Cleared → Payable → Paid`) is unchanged — `Accrued` just keys off the paid order rather than a scan.
 - **The buyer's discount is permanent and survives the Agent leaving** — identical to the Affiliate rule. If the Agent departs or is removed, FluoFit recaptures the commission slice; the buyer keeps their discount for the life of the account.
 
 ---

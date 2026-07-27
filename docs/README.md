@@ -30,6 +30,7 @@ the human-facing mirror.
 - [ADR-0007](./adr/0007-standalone-gift-retail-box-activation.md) — A gift/retail Box activates the ecosystem without a Subscription (standalone Box)
 - [ADR-0008](./adr/0008-agency-payout-intermediary.md) — A marketing agency is the payout rail for all referrers (supersedes the per-person entity gate)
 - [ADR-0009](./adr/0009-single-level-referral-no-mlm.md) — Referral is strictly single-level — no MLM / network override
+- [ADR-0010](./adr/0010-app-optional-scheduled-subscription.md) — App is optional: base Scheduled Subscription works with no app; app-less web/email entry; commission binds on the paid order
 
 ## Adding to the docs
 

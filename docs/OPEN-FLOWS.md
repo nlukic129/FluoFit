@@ -23,6 +23,7 @@ Status: ✅ resolved this pass · 🟡 partially resolved · ⬜ needs discussio
 | 🟡 Fraud-response: v1 hard block; soft-flag/review deferred | [ADR-0004](./adr/0004-referral-economics.md) |
 | 🟡 Gift/retail activation model (Standalone Box); channel itself post-v1 | [ADR-0007](./adr/0007-standalone-gift-retail-box-activation.md) |
 | ✅ XP/Level retained on cancellation (win-back lever); erasure only via account deletion/dormancy | [ADR-0005](./adr/0005-subscription-lifecycle-and-lapse.md) |
+| ✅ App-optional: base = Scheduled refill (no app); app-less web/email signup+checkout; commission binds on paid order not scan; scan-gap safety net | [ADR-0010](./adr/0010-app-optional-scheduled-subscription.md), [PRODUCT §1](./PRODUCT.md#app-optional--base-first-) |
 
 ## Needs discussion (raised, not yet resolved)
 

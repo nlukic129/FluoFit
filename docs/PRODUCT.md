@@ -24,6 +24,35 @@ See [ADR-0001](./adr/0001-consumption-driven-subscription.md).
 - Time-cap auto-shipments get a **3-day advance notice + skip/pause**.
 - **Two layers:** Subscription guarantees supply; scanning unlocks the ecosystem.
 
+### App-optional — base first ✅ — see [ADR-0010](./adr/0010-app-optional-scheduled-subscription.md)
+
+Some customers love the app; others are intrinsically motivated and don't want one. **The
+base is primary: a plain, reliable Subscription that works fully without the app — the app is
+an *additive layer*, never a gate for supply.** One product, one Subscription; the app only
+turns on the ecosystem (scanning, XP, Perks, precise refill) for those who want it.
+
+- **Two refill modes on the one Subscription** (terms in [CONTEXT.md](../CONTEXT.md)):
+  - **Scheduled refill** (base, no app) — a **fixed, adjustable cadence** (default **4
+    weeks**). With no scan signal the calendar is the only honest trigger; a narrow,
+    deliberate exception to [ADR-0001](./adr/0001-consumption-driven-subscription.md) (the
+    base daily consumer is predictable and does not stockpile).
+  - **Consumption-driven refill** (app) — the trigger model above (remaining ≤ 7 / "running
+    low" / time cap), unchanged.
+- **App-less front door:** an **email account + web signup/checkout** is the canonical entry;
+  social login (Google/Apple) is a shortcut for app users ([ARCHITECTURE §1](./ARCHITECTURE.md#1-authentication--identity-)).
+- **App-less controls:** skip / delay / change cadence / pause via **email/SMS + a magic-link
+  web page** (no install); the same 3-day advance notice precedes each auto-shipment.
+- **Modes are coupled in v1** (base = Scheduled + ecosystem off; app = Consumption-driven +
+  ecosystem on) and a Member can **switch** either way on the same account: base→app starts
+  earning from that moment; app→base **freezes + retains** XP/Level (nothing reset),
+  Subscription stays active. Independent switches are a possible later refinement.
+- **Base Members earn no XP** (they don't scan) — the fraud floor is trivially satisfied.
+- **Scan-gap safety net (consumption-driven Members only):** if **30 days pass with no refill
+  triggered and no scans**, a nudge fires (either running low → order, or just scan to keep
+  refill accurate) — catches the app user who keeps drinking but stopped scanning and would
+  otherwise silently run out. Base Members never get it (the calendar removes the risk). See
+  [§6](#6-reminders--v1-heuristic-defined).
+
 ### Lifecycle & lapse ✅ — see [ADR-0005](./adr/0005-subscription-lifecycle-and-lapse.md)
 
 - **States:** **Prospect** (account, never subscribed) → **Member** (active Subscription) → **Lapsed Member** (was a Member, no active Subscription; history retained, Level frozen, Perks paused). Terms in [CONTEXT.md](../CONTEXT.md).
@@ -71,6 +100,15 @@ Two QR types drive the whole system:
 |---|---|---|---|
 | **Box Activation** | on the Box | unique | ownership, fraud floor, refill clock, affiliate commission (a real sale), ecosystem unlock |
 | **Sachet scan** | on the Sachet | shared (non-unique) | streak, XP, reminders — capped by Boxes owned |
+
+> **"Box Activation" is two jobs, not one** ([ADR-0010](./adr/0010-app-optional-scheduled-subscription.md)):
+> **commercial binding** (ownership + fraud floor + affiliate commission = "proof of a real
+> sale") and **ecosystem unlock** (XP/Streak/Perks/precise refill). They coincide in one scan
+> only for an app user. For a **paid direct subscriber (app or base)** the paid **order** is
+> the proof, so ownership + commission bind at the **order** (`ref` captured at checkout) and
+> the scan retains only the **ecosystem-unlock** job — not required for ownership/commission.
+> A **gift/retail Standalone Box** has no paid order by its holder, so there the **scan stays
+> the binding + proof event** ([ADR-0007](./adr/0007-standalone-gift-retail-box-activation.md), unchanged).
 
 - Scanning a Sachet is honor-system; the **fraud floor** is that XP/streak can never exceed Sachets actually bought — computed **aggregate** across all Boxes (28 × Boxes owned), not per Box ([ADR-0006](./adr/0006-aggregate-supply-and-fraud-floor.md)).
 - Only **one** Sachet scan per day earns XP/streak; extra scans are allowed but earn nothing.
@@ -160,7 +198,7 @@ Two commissioned referral roles (a third, **Partner**, funds Perks instead — [
 
 Cross-cutting invariants (detail + rationale in the program doc and ADRs):
 
-- **Commission trigger** = Box Activation; **recurring** while the referred Subscription is active (earn only when FluoFit earns).
+- **Commission trigger** = the **sale event**; **recurring** while the referred Subscription is active (earn only when FluoFit earns). For a **paid direct subscriber** the sale is the **paid order** (they may never scan); for a **gift/retail Standalone Box** it is the Box Activation scan ([ADR-0010](./adr/0010-app-optional-scheduled-subscription.md) splits the two — the old "= Box Activation" was the app-scanner shorthand).
 - **Economics** ([ADR-0004](./adr/0004-referral-economics.md)): buyer discount **fixed** regardless of tier; commission is the only scaling lever, so the acquisition budget **floats** and the top tier must fit under margin. **Buyer's discount is permanent and survives the referrer leaving.** All %s wait on COGS → price.
 - **Single-level only, no MLM** ([ADR-0009](./adr/0009-single-level-referral-no-mlm.md)): a referrer earns only on Members they personally brought — never an override on other agents beneath them.
 - **Payout via a paušalna marketing agency** ([ADR-0008](./adr/0008-agency-payout-intermediary.md)): one invoice-in to the agency, which pays both Agents and Affiliates — so an individual Agent needn't register. Lifecycle `Accrued → Cleared` (30-day hold + clawback) `→ Payable → Paid`, monthly with a min threshold.
@@ -197,6 +235,12 @@ Biggest risk is over-notifying → uninstall, so **governance is the spine**, no
 3. **Streak at risk** — late in the day if a Streak is active and unscanned
 4. **Logistics** — running low / Box expiring in 3 days (transactional, from Subscription)
 5. **Re-engagement** — after X days absent; gentle, decaying frequency
+6. **Scan-gap safety net** (consumption-driven Members only) — if **30 days pass with no
+   refill triggered and no scans**, a logistics nudge (running low → order, or just scan to
+   keep refill accurate). Catches the app user who kept drinking but stopped scanning, whom
+   consumption-driven refill would otherwise let silently run out. Base (Scheduled-refill)
+   Members never get it — the calendar removes the risk. Infrequent; not part of the daily
+   habit-reminder collapse. See [ADR-0010](./adr/0010-app-optional-scheduled-subscription.md).
 
 ### Governance (the key)
 - **One smart habit reminder per day** — types 1–3 collapse into a single notification, never three.

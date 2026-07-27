@@ -29,19 +29,26 @@ stack, data model, and system-level mechanics only.
 - **Auth methods per surface:**
   | Actor | Method | Self-signup? |
   |---|---|---|
-  | **Member** (mobile) | Google + Apple (Apple required by App Store when Google is offered on iOS) | **Yes** — social login may create the account |
+  | **Member** (web) | **Email** + **web signup/checkout** — the **canonical** app-less entry ([ADR-0010](./adr/0010-app-optional-scheduled-subscription.md)); a base Member never installs the app | **Yes** — web checkout creates the account |
+  | **Member** (mobile) | Google + Apple (Apple required by App Store when Google is offered on iOS) — a **shortcut for app users**, not the only path; binds the same `auth.users.id` | **Yes** — social login may create the account |
   | **Agent** (web portal) | logs in with their **existing Member** email once approved in an intake wave; gets `ref` code | **No** — approval-gated, not self-serve signup |
   | **Affiliate** (web) | Email OTP (6-digit code) | **No** — `shouldCreateUser: false`; OTP only reaches a pre-approved email. **Invite-only:** an Admin adds the trainer/influencer's email manually. Payout runs through the agency ([ADR-0008](./adr/0008-agency-payout-intermediary.md)), so no per-person entity gate. See [PRODUCT §4](./PRODUCT.md#4-affiliate--agent-referral-program-). |
   | **Admin** (web) | Email OTP | No — provisioned |
 - **RLS keys off (role + relationship).** The privacy model ([ADR-0003](./adr/0003-affiliate-consent-boundary.md);
   a **referrer** — Agent or Affiliate — sees a client's coaching data only with that client's
   consent, and only their own clients; no cross-referrer leakage) is enforced here.
-- **Signup ↔ referral binding:** a referrer shares a link `…/join?ref=CODE`; app captures &
-  persists `ref` **before** the OAuth round-trip; post-login onboarding shows the referrer +
-  the (separate, non-pre-ticked) coaching-consent checkbox (ADR-0003); attribution binds
-  first-touch, retroactive allowed only within the grace window (14d / 2nd Box).
-  **Deferred deep linking (code survives install) = v2**; v1 fallback is manual code entry
-  within the grace window.
+- **Signup ↔ referral binding:** a referrer shares a link `…/join?ref=CODE`; app (or **web
+  checkout**) captures & persists `ref` **before** the OAuth round-trip / order; post-login
+  onboarding shows the referrer + the (separate, non-pre-ticked) coaching-consent checkbox
+  (ADR-0003); attribution binds first-touch, retroactive allowed only within the grace window
+  (14d / 2nd Box). **Deferred deep linking (code survives install) = v2**; v1 fallback is
+  manual code entry within the grace window.
+- **Commission/ownership bind on the paid order, not the scan** ([ADR-0010](./adr/0010-app-optional-scheduled-subscription.md)):
+  for a **paid direct subscriber (app or base)** the order is the "proof of a real sale", so
+  ownership + affiliate commission bind at the **paid Box order** — the Box Activation scan is
+  only an ecosystem-unlock and is **not required** for a base Member to be owned or to pay out
+  their referrer. A **gift/retail Standalone Box** keeps the scan as its binding event
+  ([ADR-0007](./adr/0007-standalone-gift-retail-box-activation.md)).
 
 ---
 
