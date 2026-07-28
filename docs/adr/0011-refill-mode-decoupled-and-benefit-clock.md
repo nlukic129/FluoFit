@@ -81,9 +81,17 @@ then stopped** (e.g. travel) — is **not** shipped a Box it did not ask for (a 
 explicitly opted out of calendar shipping; we do not impose it):
 
 - **Escalating, moderate warnings** (in-app + push + email) at roughly **day 30 / 45 / 55 /
-  59**, each offering **"Order now"** and **"Switch to Manual"** (Manual is always the lifeline
-  for someone who wants supply without scanning). Governed by [PRODUCT §6](../PRODUCT.md#6-reminders--v1-heuristic-defined)
+  59**, each offering **"Order now"**, **"Switch to Manual"** (the lifeline for someone who
+  wants supply without scanning), and **"I've stopped"**. Governed by [PRODUCT §6](../PRODUCT.md#6-reminders--v1-heuristic-defined)
   (quiet hours, back-off).
+- **Ignoring keeps the warnings coming** on schedule.
+- **An explicit "I've stopped" stops the nagging.** The Member may add an **optional reason**
+  (captured as churn feedback); choosing "I've stopped" **suppresses all remaining scheduled
+  warnings** — we do not nag someone who told us they stopped. Suppression is triggered by the
+  "I've stopped" choice itself, not by submitting a reason.
+- **Exactly one message still fires: the day-60 closure notice** — "your Perks and discount are
+  paused until your next subscription." Benefits still run out their paid 60 days; the lapse is
+  **not** pulled early.
 - Supply is therefore **always one tap away**; we never force it.
 
 ### 5. The Benefit clock (anti-gaming invariant)

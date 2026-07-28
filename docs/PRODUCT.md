@@ -253,7 +253,10 @@ Biggest risk is over-notifying → uninstall, so **governance is the spine**, no
 5. **Re-engagement** — after X days absent; gentle, decaying frequency
 6. **Smart-silence warnings** (Smart Members only) — a Smart Subscription that goes silent
    (never scanned, or stopped) gets **escalating moderate warnings at ~day 30 / 45 / 55 / 59**,
-   each offering **"Order now"** and **"Switch to Manual"**. At **day 60 with no paid order
+   each offering **"Order now"**, **"Switch to Manual"**, and **"I've stopped"**. Ignoring keeps
+   them coming; choosing **"I've stopped"** (with an optional reason for churn feedback)
+   **suppresses the remaining warnings** — only the **day-60 closure notice** still fires
+   ("Perks and discount paused until your next subscription"). At **day 60 with no paid order
    the benefits lapse** (Benefit clock — [ADR-0011](./adr/0011-refill-mode-decoupled-and-benefit-clock.md)); we **never force-ship**. Manual
    Members never get these — the calendar removes the risk. Infrequent; not part of the daily
    habit-reminder collapse.
