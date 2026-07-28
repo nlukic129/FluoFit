@@ -6,6 +6,12 @@
 > narrow, deliberate exception, because the calendar's original failure mode (irregular
 > consumers stockpiling) does not apply to the predictable daily base consumer. The
 > consumption-driven model below is unchanged for app users.
+>
+> **Further amended (2026-07) by [ADR-0011](./0011-refill-mode-decoupled-and-benefit-clock.md):**
+> the modes are now decoupled from the app (Manual 28–60 cadence chosen at checkout, usable
+> even by scanners); and the **60-day time cap no longer force-ships a silent Smart Member** —
+> at 60 days with no paid order their **benefits lapse** (Benefit clock) instead. Manual ships
+> on its own ≤60-day calendar, so force-ship at a cap is retired.
 
 ## Context
 

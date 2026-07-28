@@ -1,5 +1,10 @@
 # Subscription lifecycle: account states, what triggers a lapse, and earning after lapse
 
+> **Amended (2026-07) by [ADR-0011](./0011-refill-mode-decoupled-and-benefit-clock.md):** a
+> **third** lapse trigger is added — **Benefit-clock inactivity** (a Smart Subscription with no
+> paid order for 60 days). Treated like the involuntary failed-charge path (referred discount
+> retained). The "exactly two paths" below now reads "three".
+
 ## Context
 
 The model described the steady-state loop (activate → scan → refill) but never defined how a person enters it, nor what actually ends a Subscription. Two holes:
@@ -16,10 +21,11 @@ The model described the steady-state loop (activate → scan → refill) but nev
 - **Paused** — a Member who voluntarily holds billing + shipments, intending to return. The Subscription stays **alive but dormant**; un-pausing resumes the **same** Subscription. Level/XP retained + frozen; Perk redemption + partner/sponsor codes off; **Streak breaks** (single-layer weekly grace, no freeze tokens). **Referred discount is retained** — pause is *not* deliberately ending the Subscription, so it sits on the "keep the discount" side of the [ADR-0004](./0004-referral-economics.md) cut (unlike cancellation). Behaviour spec: [PRODUCT §1 pause](../PRODUCT.md#subscription-pause-).
 - **Lapsed Member** — a former Member whose Subscription is no longer active. **All history is retained**; Level/XP frozen (not reset); Perk redemption paused.
 
-**A Member becomes Lapsed via exactly two paths:**
+**A Member becomes Lapsed via three paths** (the third added by [ADR-0011](./0011-refill-mode-decoupled-and-benefit-clock.md)):
 
-1. **Voluntary cancellation** — the Member turns the Subscription off.
-2. **Failed refill charge, unrecovered.** A charge occurs at *every* refill (billed per Box at shipment), whichever trigger fired — 21 scans, "running low", or the 60-day cap — **not** only at the cap. A single failed charge does **not** lapse the account: it enters a **past-due (dunning)** sub-state with retries over a short window; only if unrecovered does it become Lapsed. The exact window length is a parameter tied to the (parked) payment provider.
+1. **Voluntary cancellation** — the Member turns the Subscription off. *(Forfeits the referred discount.)*
+2. **Failed refill charge, unrecovered.** A charge occurs at *every* refill (billed per Box at shipment), whichever trigger fired — 21 scans, "running low", or the Manual cadence — **not** only at a cap. A single failed charge does **not** lapse the account: it enters a **past-due (dunning)** sub-state with retries over a short window; only if unrecovered does it become Lapsed. The exact window length is a parameter tied to the (parked) payment provider. *(Discount retained.)*
+3. **Benefit-clock inactivity** ([ADR-0011](./0011-refill-mode-decoupled-and-benefit-clock.md)) — a **Smart** Subscription with **no paid order for 60 days**, after escalating warnings, has its **benefits lapse** rather than being force-shipped. Scanning an old Box never resets the clock; **revival requires a paid order**. Treated as involuntary — *discount retained*.
 
 **Earning after lapse — rule (A):** if a Lapsed/cancelled person still physically holds a Box with un-drunk Sachets they already paid for, they **keep earning XP/Streak** by scanning those remaining Sachets; only **Perk redemption** is paused. Earning follows *paid product*; redemption follows *active Subscription*. This preserves the "XP ≤ Sachets bought" invariant (nothing unpaid is earned) and gives a natural reactivation hook ("6 Sachets left — don't break your streak").
 

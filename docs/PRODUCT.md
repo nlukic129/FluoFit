@@ -24,39 +24,49 @@ See [ADR-0001](./adr/0001-consumption-driven-subscription.md).
 - Time-cap auto-shipments get a **3-day advance notice + skip/pause**.
 - **Two layers:** Subscription guarantees supply; scanning unlocks the ecosystem.
 
-### App-optional — base first ✅ — see [ADR-0010](./adr/0010-app-optional-scheduled-subscription.md)
+### App-optional — base first ✅ — see [ADR-0010](./adr/0010-app-optional-scheduled-subscription.md), refined by [ADR-0011](./adr/0011-refill-mode-decoupled-and-benefit-clock.md)
 
 Some customers love the app; others are intrinsically motivated and don't want one. **The
 base is primary: a plain, reliable Subscription that works fully without the app — the app is
 an *additive layer*, never a gate for supply.** One product, one Subscription; the app only
 turns on the ecosystem (scanning, XP, Perks, precise refill) for those who want it.
 
-- **Two refill modes on the one Subscription** (terms in [CONTEXT.md](../CONTEXT.md)):
-  - **Scheduled refill** (base, no app) — a **fixed, adjustable cadence** (default **4
-    weeks**). With no scan signal the calendar is the only honest trigger; a narrow,
-    deliberate exception to [ADR-0001](./adr/0001-consumption-driven-subscription.md) (the
-    base daily consumer is predictable and does not stockpile).
-  - **Consumption-driven refill** (app) — the trigger model above (remaining ≤ 7 / "running
-    low" / time cap), unchanged.
+- **Two refill modes, chosen at checkout (web or app), independent of the app** ([ADR-0011](./adr/0011-refill-mode-decoupled-and-benefit-clock.md); terms in [CONTEXT.md](../CONTEXT.md)):
+  - **Manual refill** (= Scheduled) — a **user-chosen cadence of 28–60 days** (28 = daily-
+    consumer floor; 60 = lightest honest consumer / absolute cap). No scan needed, so it runs
+    **with the app on or off**. A narrow, deliberate exception to [ADR-0001](./adr/0001-consumption-driven-subscription.md).
+  - **Smart refill** (= Consumption-driven) — remaining ≤ 7 / "running low" / "Order now".
+    **Requires scanning**, so app-only. **Auto-ships only on a real consumption signal (≤ 7) or
+    manual "Order now" — never on a calendar.** Two substates: **Smart-pending** (chosen, not
+    yet scanned — no signal, so **no auto-ship**; nudged to scan) → **Smart-active**.
+- **Modes are decoupled** ([ADR-0011](./adr/0011-refill-mode-decoupled-and-benefit-clock.md) amends ADR-0010's v1 coupling): an app Member who scans
+  for XP may still keep a Manual calendar. Only Smart+no-app is impossible (no signal). A
+  Member can **switch** either way; switching **freezes + retains** XP/Level (nothing reset).
+- **Delivery-aware scheduling:** "N days" = the **doorstep-to-doorstep** gap; the system ships
+  early enough — carrier cutoff (before 13:00 → next day, after → +2; **no weekend
+  deliveries**) — that the Box lands on the target day. **First Box ships immediately from the
+  order**; the mode governs Box #2 onward. **Order tracking is shown in-app.**
+- **Silence never force-ships.** A Smart Subscription that goes silent (never scanned, or
+  stopped) gets **escalating moderate warnings** (~day 30/45/55/59, in-app + push + email),
+  each offering **"Order now"** and **"Switch to Manual"** — supply stays **one tap away**, we
+  never push a Box the Member did not ask for.
+- **Benefit clock (anti-gaming):** **Perks + referred discount live ≤ 60 days from the last
+  paid order; only a paid order resets it — scanning never does.** One Box = at most 60 days
+  of live benefits. At day 60 with no order → **benefits lapse** (Lapsed Member: benefits off,
+  XP/Level frozen + retained, Streak breaks); a **paid order revives** them (referred discount
+  retained). This is a **third lapse trigger** and changes what ADR-0001's 60-day cap does
+  (lapse, not force-ship). See **Lifecycle & lapse** below and [ADR-0005](./adr/0005-subscription-lifecycle-and-lapse.md).
 - **App-less front door:** an **email account + web signup/checkout** is the canonical entry;
   social login (Google/Apple) is a shortcut for app users ([ARCHITECTURE §1](./ARCHITECTURE.md#1-authentication--identity-)).
-- **App-less controls:** skip / delay / change cadence / pause via **email/SMS + a magic-link
-  web page** (no install); the same 3-day advance notice precedes each auto-shipment.
-- **Modes are coupled in v1** (base = Scheduled + ecosystem off; app = Consumption-driven +
-  ecosystem on) and a Member can **switch** either way on the same account: base→app starts
-  earning from that moment; app→base **freezes + retains** XP/Level (nothing reset),
-  Subscription stays active. Independent switches are a possible later refinement.
+- **App-less controls:** skip / delay / change cadence / pause via the **logged-in web account**
+  or an **email/SMS magic-link web page** (no install, no login needed); the same 3-day advance
+  notice precedes each auto-shipment.
 - **Base Members earn no XP** (they don't scan) — the fraud floor is trivially satisfied.
-- **Scan-gap safety net (consumption-driven Members only):** if **30 days pass with no refill
-  triggered and no scans**, a nudge fires (either running low → order, or just scan to keep
-  refill accurate) — catches the app user who keeps drinking but stopped scanning and would
-  otherwise silently run out. Base Members never get it (the calendar removes the risk). See
-  [§6](#6-reminders--v1-heuristic-defined).
 
 ### Lifecycle & lapse ✅ — see [ADR-0005](./adr/0005-subscription-lifecycle-and-lapse.md)
 
 - **States:** **Prospect** (account, never subscribed) → **Member** (active Subscription) → **Lapsed Member** (was a Member, no active Subscription; history retained, Level frozen, Perks paused). Terms in [CONTEXT.md](../CONTEXT.md).
-- **Lapse triggers (only two):** voluntary cancellation, or a **failed refill charge** that isn't recovered during a **past-due (dunning)** window. A charge happens at *every* refill, not only the 60-day cap; one failed charge ≠ instant lapse.
+- **Lapse triggers (three):** voluntary cancellation; a **failed refill charge** not recovered during a **past-due (dunning)** window; or **Benefit-clock inactivity** — a Smart Subscription with **no paid order for 60 days** ([ADR-0011](./adr/0011-refill-mode-decoupled-and-benefit-clock.md)). A charge happens at *every* refill; one failed charge ≠ instant lapse. The referred discount is **retained** on the involuntary two (failed charge, inactivity) and forfeited only on explicit cancellation ([ADR-0004](./adr/0004-referral-economics.md)).
 - **Earning after lapse:** a Lapsed Member still keeps **earning XP/Streak** on already-paid Sachets they physically hold; only **Perk redemption** is paused. (Earning follows paid product; redemption follows active Subscription.)
 - ⬜ Dunning window length + retry cadence (tied to the parked payment provider).
 
@@ -71,7 +81,7 @@ A **universal Member right** (not a Level Perk): voluntarily hold billing **and*
 
 ### Prospect home ✅ — conversion-first entry surface
 
-What a logged-in **Prospect** sees before their first Subscription. A Prospect is reached only via a captured affiliate `ref`, a Standalone Box scan, or an abandoned checkout — never a "just browsing" account. The screen is **conversion-first**, not the full Member home (no Perk-redemption / Partner / loyalty layer).
+What a logged-in **Prospect** sees before their first Subscription. A Prospect is reached via a captured affiliate `ref`, a Standalone Box scan, an abandoned checkout, or a **cold app/web registration** — "browsing" happens pre-registration (App Store listing, landing page), so the moment an account exists the person is a Prospect. The screen is **conversion-first**, not the full Member home (no Perk-redemption / Partner / loyalty layer).
 
 - **One adaptive screen, not two.** A single Prospect home whose **hero-lever adapts to the entry path**, while the CTA (**"Start Subscription"**) and a shared "what you unlock" ecosystem teaser stay constant:
 
@@ -80,12 +90,17 @@ What a logged-in **Prospect** sees before their first Subscription. A Prospect i
   | **Standalone Box** (warm) | Progress + depletion: "your N-day Streak & XP are live — your Box is running low, subscribe to keep the run" |
   | **Affiliate `ref`** (cold) | Referrer's discount + social proof: "[referrer] unlocked X% off — active as long as you don't cancel" (continuity, **not** "first order only" — [ADR-0004](./adr/0004-referral-economics.md)) |
   | **Abandoned checkout** (cold) | Friction removal: "pick up where you left off" → resume checkout |
+  | **Cold app/web registrant** (cold) | Generic acquisition: "start with your first Box — here's what you unlock" → **Start Subscription** (no `ref`/Box-specific lever) |
 
 - **Warm Prospect (Standalone Box holder)** additionally sees a *subset* of the Member experience via the [always-live scanner](#2-scan-model-):
   - **Live** (it genuinely accrues): scanner strip, Streak flame, XP counter.
   - **Next-unlock teaser only** (not the whole ladder): "40 XP to Level 2 — subscribe to claim its Perks."
   - **Perk cards visible but lock-overlaid** ("Subscribe to redeem") — sees the value, can't take it.
   - **Two-step depletion escalation** ([ADR-0007](./adr/0007-standalone-gift-retail-box-activation.md)): full Box → ambient banner; ≤ 7 Sachets → prominent on-open card.
+- **Subscription offer is routed by behaviour, not pushed at the first scan** ([ADR-0011](./adr/0011-refill-mode-decoupled-and-benefit-clock.md)) — over-pressure risks uninstall, and there is nothing to game (Perks locked; XP ≤ Sachets bought):
+  - **Proven daily streak (~3–4 days) → proactive Smart offer**, framed on their live progress ("your 4-day run is live — subscribe with Smart refill, never run out, claim your Perks").
+  - **Every other pattern** (scanned once then stopped; irregular) **→ Manual offer at ~day 25** (estimated depletion; with no reliable scan signal the calendar is the only honest trigger), and the offer **also surfaces the Perks already earned** ("subscribe → refills every 28–60 days *and* unlock your Level-X Perks").
+  - **Smart stays a manual choice** anyone can pick — it is simply not *pushed* without a proven daily habit.
 - **No hard countdown timers / aggressive urgency** — depletion is natural urgency enough; over-pressure risks uninstall.
 - **Numbers are slots, not values:** discount % waits on COGS → pricing; the layout reserves the slot.
 - ⬜ Exact copy/visual treatment is a build-time detail (prototype territory), not decided here.
@@ -145,6 +160,7 @@ Concepts (see CONTEXT.md): **Streak**, **XP**, **Level**, **Perk**. Funding rule
 
 - **Day boundary:** a "day" is a calendar day in the Member's **account timezone** — not UTC (would break evening scanners in GMT+n), not the live device clock (would let "set the clock back" extend a day). Timezone is **fixed on the account** (set at onboarding, changeable in settings); it does not auto-follow travel. The fraud floor ([ADR-0006](./adr/0006-aggregate-supply-and-fraud-floor.md)) bounds the rest, so the boundary needn't be cryptographically hard — just fair to honest users and closed to the trivial clock trick.
 - **Forgiveness — one layer only:** an **automatic weekly grace (everyone, no token):** one missed day per **rolling 7-day window** *holds* the Streak — the miss neither advances nor breaks it; it resumes on the next scan. A missed day earns **no XP** (nothing was scanned); grace only holds the counter/multiplier, so the "XP ≤ Sachets bought" invariant is untouched. **No freeze tokens exist** — beyond the one weekly miss the Streak breaks. Deliberately sensitive: a real gap (e.g. a paused Subscription) breaks it, and nothing can bank protection. (This is why a Subscription pause breaks the Streak — see [§1 pause](#1-subscription--refill-).)
+  - **One narrow exception — "our-fault" freeze** ([ADR-0011](./adr/0011-refill-mode-decoupled-and-benefit-clock.md)): if the Member has **zero supply while a Box is in transit** (we know both — consumption from scans, delivery status from the carrier), the Streak is **frozen** for that window and resumes on the first scan after delivery. Not a banked token — we cannot penalise a gap *we* caused by not delivering product to scan.
 - **The Member must always know their state** (ties into [§6 Reminders](#6-reminders--v1-heuristic-defined) governance):
   - **Grace used:** when a miss is absorbed, tell them — "you missed yesterday, but your N-day Streak is safe (weekly skip used)" — surfaced on next app open / next scan, respecting the one-habit-reminder-per-day and quiet-hours rules.
   - **Streak broken:** when forgiveness is exhausted and the Streak actually breaks, a **motivational re-engagement** message to start again from zero — not a silent reset.
@@ -235,12 +251,12 @@ Biggest risk is over-notifying → uninstall, so **governance is the spine**, no
 3. **Streak at risk** — late in the day if a Streak is active and unscanned
 4. **Logistics** — running low / Box expiring in 3 days (transactional, from Subscription)
 5. **Re-engagement** — after X days absent; gentle, decaying frequency
-6. **Scan-gap safety net** (consumption-driven Members only) — if **30 days pass with no
-   refill triggered and no scans**, a logistics nudge (running low → order, or just scan to
-   keep refill accurate). Catches the app user who kept drinking but stopped scanning, whom
-   consumption-driven refill would otherwise let silently run out. Base (Scheduled-refill)
-   Members never get it — the calendar removes the risk. Infrequent; not part of the daily
-   habit-reminder collapse. See [ADR-0010](./adr/0010-app-optional-scheduled-subscription.md).
+6. **Smart-silence warnings** (Smart Members only) — a Smart Subscription that goes silent
+   (never scanned, or stopped) gets **escalating moderate warnings at ~day 30 / 45 / 55 / 59**,
+   each offering **"Order now"** and **"Switch to Manual"**. At **day 60 with no paid order
+   the benefits lapse** (Benefit clock — [ADR-0011](./adr/0011-refill-mode-decoupled-and-benefit-clock.md)); we **never force-ship**. Manual
+   Members never get these — the calendar removes the risk. Infrequent; not part of the daily
+   habit-reminder collapse.
 
 ### Governance (the key)
 - **One smart habit reminder per day** — types 1–3 collapse into a single notification, never three.
