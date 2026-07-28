@@ -30,7 +30,7 @@ stack, data model, and system-level mechanics only.
   | Actor | Method | Self-signup? |
   |---|---|---|
   | **Member** (web) | **Email + pay, passwordless** — the account is **auto-provisioned from the checkout email** (no upfront registration/password wall; password or magic-link set later, only to manage). The **canonical** app-less entry ([ADR-0010](./adr/0010-app-optional-scheduled-subscription.md), [ADR-0012](./adr/0012-identity-checkout-and-box-ownership.md)); a base Member never installs the app | **Yes** — the purchase creates the account |
-  | **Member** (mobile) | Google + Apple (Apple required by App Store when Google is offered on iOS) — a **shortcut for app users**, not the only path; binds the same `auth.users.id` **when the email matches**. A *different* social-login email makes a **separate** account — **no linking** ([ADR-0012](./adr/0012-identity-checkout-and-box-ownership.md)), so a self-split is possible and accepted | **Yes** — social login may create the account |
+  | **Member** (mobile) | Google + Apple (Apple required by App Store when Google is offered on iOS) — a **shortcut for app users**, not the only path; binds the same `auth.users.id` **when the email matches**. If the app login is a *different* email, the **first in-app scan transfers the whole Subscription onto it** (consolidation, not linking — [ADR-0012](./adr/0012-identity-checkout-and-box-ownership.md)), so there is **no split** | **Yes** — social login may create the account |
   | **Agent** (web portal) | logs in with their **existing Member** email once approved in an intake wave; gets `ref` code | **No** — approval-gated, not self-serve signup |
   | **Affiliate** (web) | Email OTP (6-digit code) | **No** — `shouldCreateUser: false`; OTP only reaches a pre-approved email. **Invite-only:** an Admin adds the trainer/influencer's email manually. Payout runs through the agency ([ADR-0008](./adr/0008-agency-payout-intermediary.md)), so no per-person entity gate. See [PRODUCT §4](./PRODUCT.md#4-affiliate--agent-referral-program-). |
   | **Admin** (web) | Email OTP | No — provisioned |
@@ -49,14 +49,15 @@ stack, data model, and system-level mechanics only.
   only an ecosystem-unlock and is **not required** for a base Member to be owned or to pay out
   their referrer. A **gift/retail Standalone Box** keeps the scan as its binding event
   ([ADR-0007](./adr/0007-standalone-gift-retail-box-activation.md)).
-- **Subscription vs Box ownership** ([ADR-0012](./adr/0012-identity-checkout-and-box-ownership.md)):
-  the **Subscription** (billing, refills, notifications, `ref`) is permanently the **orderer's**
-  account; a **Box's ecosystem-ownership** (XP/Streak/Level, one-time activation) binds to the
-  **first account that scans it** and is then final. The two coincide for the normal
-  self-scanning subscriber; a different scanner (a gift) just gets a Standalone Box. **We do not
-  link accounts** — a person who checks out as email A and scans in-app as email B is split
-  (Subscription on A, XP on B) and cannot redeem Perks until they consolidate; accepted for
-  simplicity, guidance is one account per person.
+- **Subscription claim on first scan** ([ADR-0012](./adr/0012-identity-checkout-and-box-ownership.md)):
+  at checkout the Subscription lives on the checkout email's account; the **first scan of one of
+  its Boxes transfers the *whole* Subscription** (billing, refills, notifications, XP/Streak/Level,
+  `ref`) onto the scanning account, permanently — a **transfer, not a link**, so a buyer who
+  checks out as email A and scans in-app as email B **consolidates onto one account (no split)**.
+  A scanned Box is **locked** (one-time activation); a **retail Box** has no Subscription to
+  transfer, so its scanner gets a **Standalone Box** ([ADR-0007](./adr/0007-standalone-gift-retail-box-activation.md)).
+  Trade-off: whoever first scans a delivered Box takes over its Subscription — guarded by the
+  tamper-sealed QR + shipping address + support override, accepted for simplicity.
 
 ---
 

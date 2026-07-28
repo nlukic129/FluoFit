@@ -25,7 +25,7 @@ Status: ✅ resolved this pass · 🟡 partially resolved · ⬜ needs discussio
 | ✅ XP/Level retained on cancellation (win-back lever); erasure only via account deletion/dormancy | [ADR-0005](./adr/0005-subscription-lifecycle-and-lapse.md) |
 | ✅ App-optional: base = Scheduled refill (no app); app-less web/email signup+checkout; commission binds on paid order not scan; scan-gap safety net | [ADR-0010](./adr/0010-app-optional-scheduled-subscription.md), [PRODUCT §1](./PRODUCT.md#app-optional--base-first-) |
 | ✅ Refill mode decoupled from the app (Smart / Manual 28–60, chosen at checkout); Smart never blind-ships; silence lapses benefits (Benefit clock), never force-ships; delivery-aware scheduling; Streak our-fault freeze; retail on-ramp routed by behaviour | [ADR-0011](./adr/0011-refill-mode-decoupled-and-benefit-clock.md), [PRODUCT §1](./PRODUCT.md#app-optional--base-first-) |
-| ✅ Checkout identity & ownership: passwordless email-first; Subscription = orderer, Box ecosystem = first-scanner; no account-linking (self-split accepted) | [ADR-0012](./adr/0012-identity-checkout-and-box-ownership.md), [ARCHITECTURE §1](./ARCHITECTURE.md#1-authentication--identity-) |
+| ✅ Checkout identity & ownership: passwordless email-first; first scan transfers the whole Subscription onto the scanner (consolidation → no split, no linking); scanned Box locked; retail Box = Standalone | [ADR-0012](./adr/0012-identity-checkout-and-box-ownership.md), [ARCHITECTURE §1](./ARCHITECTURE.md#1-authentication--identity-) |
 
 ## Needs discussion (raised, not yet resolved)
 
