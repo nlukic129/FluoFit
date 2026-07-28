@@ -32,6 +32,7 @@ the human-facing mirror.
 - [ADR-0009](./adr/0009-single-level-referral-no-mlm.md) — Referral is strictly single-level — no MLM / network override
 - [ADR-0010](./adr/0010-app-optional-scheduled-subscription.md) — App is optional: base Scheduled Subscription works with no app; app-less web/email entry; commission binds on the paid order
 - [ADR-0011](./adr/0011-refill-mode-decoupled-and-benefit-clock.md) — Refill mode decoupled from the app (Smart / Manual 28–60, chosen at checkout); Smart-pending fallback; delivery-aware scheduling; silence lapses benefits (Benefit clock), never force-ships; retail on-ramp routing; Streak our-fault freeze
+- [ADR-0012](./adr/0012-identity-checkout-and-box-ownership.md) — Passwordless email-first checkout; Subscription = orderer, Box ecosystem-ownership = first scanner; no account-linking (self-split accepted)
 
 ## Adding to the docs
 

@@ -21,7 +21,7 @@ A Member's standing agreement to receive Boxes. Billed **per Box at time of ship
 _Avoid_: Plan, membership (membership = the loyalty status, not the subscription)
 
 **Box Activation**:
-The act of scanning a Box's unique QR code against a Member's account. Starts the Box's consumption clock and unlocks the ecosystem (XP, streaks, partner perks, consumption-based refill timing) for that Box. Without activation the Member still receives product on a time-based refill, but earns no XP and gets no perks.
+The act of scanning a Box's unique QR code against a Member's account. Starts the Box's consumption clock and unlocks the ecosystem (XP, streaks, partner perks, consumption-based refill timing) for that Box. Without activation the Member still receives product on a time-based refill, but earns no XP and gets no perks. The account bound is the **first scanner** — the Box's **permanent ecosystem-owner** (XP/Streak/Level); the **Subscription that ordered it stays with the orderer** regardless, and accounts are **not linked** ([ADR-0012](./docs/adr/0012-identity-checkout-and-box-ownership.md)).
 _Avoid_: Registration, claiming
 
 **Refill**:

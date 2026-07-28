@@ -129,7 +129,7 @@ Two QR types drive the whole system:
 - Only **one** Sachet scan per day earns XP/streak; extra scans are allowed but earn nothing.
 - Must work **offline** (poor gym signal): queue scans locally, sync on reconnect.
 - **Anti-theft (physical):** the Box's unique QR is hidden under a tamper seal — revealed only when the Box is torn open, defeating in-store/in-transit photographing.
-- **Anti-duplication (software):** one-time activation — once a Box QR is bound to an account it can never bind to another.
+- **Anti-duplication (software):** one-time activation — once a Box QR is bound to an account it can never bind to another. The account it binds to is the **first scanner**, who becomes the Box's **permanent ecosystem-owner** (XP/Streak/Level). The **Subscription stays with the orderer** regardless ([ADR-0012](./adr/0012-identity-checkout-and-box-ownership.md)); if the scanner isn't that subscriber (a gift) the Box is a **Standalone Box** for them ([ADR-0007](./adr/0007-standalone-gift-retail-box-activation.md)). **Accounts are not linked** — a same-person, two-email split (checkout email vs app social-login) is possible and accepted; guidance is one account per person.
 - **Channel-agnostic:** because the QR is revealed only on opening, it need not be pre-bound to a Member — the same mechanism works for subscription now and future retail/gifting without redesign. A gift/retail Box activated by a non-subscriber is a **Standalone Box** (earn-not-redeem until they subscribe) — see [ADR-0007](./adr/0007-standalone-gift-retail-box-activation.md). **The gift/retail channel is not a v1 focus**; the model is fixed now so the QR design needs no later redesign.
 
 ### Scan surface — always-live scanner ✅

@@ -29,8 +29,8 @@ stack, data model, and system-level mechanics only.
 - **Auth methods per surface:**
   | Actor | Method | Self-signup? |
   |---|---|---|
-  | **Member** (web) | **Email** + **web signup/checkout** — the **canonical** app-less entry ([ADR-0010](./adr/0010-app-optional-scheduled-subscription.md)); a base Member never installs the app | **Yes** — web checkout creates the account |
-  | **Member** (mobile) | Google + Apple (Apple required by App Store when Google is offered on iOS) — a **shortcut for app users**, not the only path; binds the same `auth.users.id` | **Yes** — social login may create the account |
+  | **Member** (web) | **Email + pay, passwordless** — the account is **auto-provisioned from the checkout email** (no upfront registration/password wall; password or magic-link set later, only to manage). The **canonical** app-less entry ([ADR-0010](./adr/0010-app-optional-scheduled-subscription.md), [ADR-0012](./adr/0012-identity-checkout-and-box-ownership.md)); a base Member never installs the app | **Yes** — the purchase creates the account |
+  | **Member** (mobile) | Google + Apple (Apple required by App Store when Google is offered on iOS) — a **shortcut for app users**, not the only path; binds the same `auth.users.id` **when the email matches**. A *different* social-login email makes a **separate** account — **no linking** ([ADR-0012](./adr/0012-identity-checkout-and-box-ownership.md)), so a self-split is possible and accepted | **Yes** — social login may create the account |
   | **Agent** (web portal) | logs in with their **existing Member** email once approved in an intake wave; gets `ref` code | **No** — approval-gated, not self-serve signup |
   | **Affiliate** (web) | Email OTP (6-digit code) | **No** — `shouldCreateUser: false`; OTP only reaches a pre-approved email. **Invite-only:** an Admin adds the trainer/influencer's email manually. Payout runs through the agency ([ADR-0008](./adr/0008-agency-payout-intermediary.md)), so no per-person entity gate. See [PRODUCT §4](./PRODUCT.md#4-affiliate--agent-referral-program-). |
   | **Admin** (web) | Email OTP | No — provisioned |
@@ -49,6 +49,14 @@ stack, data model, and system-level mechanics only.
   only an ecosystem-unlock and is **not required** for a base Member to be owned or to pay out
   their referrer. A **gift/retail Standalone Box** keeps the scan as its binding event
   ([ADR-0007](./adr/0007-standalone-gift-retail-box-activation.md)).
+- **Subscription vs Box ownership** ([ADR-0012](./adr/0012-identity-checkout-and-box-ownership.md)):
+  the **Subscription** (billing, refills, notifications, `ref`) is permanently the **orderer's**
+  account; a **Box's ecosystem-ownership** (XP/Streak/Level, one-time activation) binds to the
+  **first account that scans it** and is then final. The two coincide for the normal
+  self-scanning subscriber; a different scanner (a gift) just gets a Standalone Box. **We do not
+  link accounts** — a person who checks out as email A and scans in-app as email B is split
+  (Subscription on A, XP on B) and cannot redeem Perks until they consolidate; accepted for
+  simplicity, guidance is one account per person.
 
 ---
 
