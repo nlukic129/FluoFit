@@ -23,7 +23,7 @@ Rule of thumb: **routine work = Claude auto-picks; process/mode changes = you ca
 | **supabase** | Auth, RLS, Edge Functions, migrations, schema, security audits | auto when Supabase work appears |
 | **supabase-postgres-best-practices** | Postgres query/schema/index optimization | auto when writing/reviewing SQL |
 | **vercel-react-native-skills** | React Native patterns (project-scoped) | auto during app code |
-| **expo/skills** (23 skills) | Official Expo: `expo-router`, `expo-native-ui`, `expo-data-fetching`, `expo-project-structure`, `expo-dev-client`, `eas-*` (build/deploy/hosting/workflows)… | auto per task |
+| **expo/skills** (23 skills) | Official Expo: `expo-router`, `expo-native-ui`, `expo-data-fetching`, `expo-project-structure`, `expo-dev-client`, `expo-ui`, `expo-upgrade`, `eas-*` (build/deploy/hosting/workflows)… | auto per task |
 
 These fill the real gap — your backend privacy model (ADR-0003 → RLS) and your Expo app.
 

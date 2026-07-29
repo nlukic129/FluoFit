@@ -3,8 +3,9 @@
 **/.DS_Store
 *.log
 
-# Agent / skill tooling (nije deo FluoFit projekta)
+# Agent / skill tooling
+# Vendored skill files are local (like node_modules); the lock is the manifest
+# (like package-lock.json) and IS tracked so `npx skills add` can restore the set.
 .agents/
 .claude/
-skills-lock.json
 node_modules/
