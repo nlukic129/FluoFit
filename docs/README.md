@@ -37,6 +37,7 @@ the human-facing mirror.
 - [ADR-0012](./adr/0012-identity-checkout-and-box-ownership.md) — Passwordless email-first checkout; the first scan transfers the whole Subscription onto the scanner (consolidation → no split, no linking); scanned Box locked; retail Box = Standalone
 - [ADR-0013](./adr/0013-dynamic-config-grandfathering-and-manual-margin.md) — Gamification & referral config is Admin-dynamic; grandfathering differs by dial; checkpoint XP; margin safety human-managed (calculator), not enforced
 - [ADR-0014](./adr/0014-stack-monorepo-and-ports.md) — Stack & monorepo shape (Expo universal Member app + Expo-web partners/admin, Supabase); invariants in shared packages; parked integrations behind adapter ports
+- [ADR-0015](./adr/0015-admin-nextjs-and-design-language.md) — Admin Console on Next.js + Tailwind + shadcn-style; light-mode, English, desktop-first design language (invokes ADR-0014's escape hatch)
 
 ## Adding to the docs
 

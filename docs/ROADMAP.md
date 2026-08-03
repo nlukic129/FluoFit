@@ -14,6 +14,25 @@ its owning doc — **one fact = one place**, never copied here.
 
 ---
 
+## Admin Console — completion track (active priority) 🟡
+
+A dedicated track to finish the **whole Admin Console** ([admin-console.md](./product/admin-console.md)).
+Stack + design language: **Next.js + Tailwind + shadcn-style, light-mode, English, desktop-first**
+([ADR-0015](./adr/0015-admin-nextjs-and-design-language.md); design system persisted at
+`apps/admin/design-system/`). Supersedes the admin items previously scattered across Phases 1/4/5.
+
+- ✅ **M0 — Foundation:** Next.js (App Router) + Tailwind v4 + shadcn-style primitives + light design tokens (`ui-ux-pro-max`) + Fira Sans/Code; sidebar shell + Email-OTP auth guard; all module routes stubbed. Verified `next build` + `tsc`.
+- ⬜ **M1 — Provisioning + Overview:** live KPIs; Batches/Boxes DataTable, Generate dialog, Void, CSV export (wired to `fn_provision_batch`/`fn_void_box`).
+- ⬜ **M2 — Members + Support & Overrides:** member 360; ticket queue + override toolkit (`fn_admin_manual_activate`, `fn_admin_unbind_rebind`, `fn_admin_adjust_progress` [loud-exception], `fn_admin_release_commission`, `fn_admin_fix_attribution`).
+- ⬜ **M3 — Gamification config:** dials over `fn_apply_config`; Levels CRUD (`fn_upsert_level` — never delete held), Perk↔Level, eligibility, tier rates, buyer discount — grandfathering per [ADR-0013](./adr/0013-dynamic-config-grandfathering-and-manual-margin.md).
+- ⬜ **M4 — Agents/Intake + Affiliates:** waves (`fn_open_wave`/`fn_decide_application`/`fn_close_wave`/`fn_block_member`); Affiliate add/offboard (`fn_add_affiliate`/`fn_offboard_referrer`).
+- ⬜ **M5 — Payouts + Fraud:** statement → agency (`fn_generate_payout_statement`/`fn_mark_commissions_paid`); held-commission release/clawback.
+- ⬜ **M6 — Partners + Audit Log + final UX pass:** partner CRUD + perk/tier map; audit viewer; `ui-ux-pro-max` checklist (contrast, focus, empty/loading/error, keyboard).
+
+Every mutating RPC = `SECURITY DEFINER` + `is_admin()` + `fn_log_audit` (reason on sensitive). Each RPC Postgres-tested; each UI delivered typecheck/`next build`-green.
+
+---
+
 ## Phase 0 — Foundation ✅
 
 *No UI by design — this is the shared layer every app reads.*
