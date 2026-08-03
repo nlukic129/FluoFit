@@ -19,3 +19,9 @@ enable_signup = true
 [auth.email]
 enable_signup = true
 enable_confirmations = false
+# Admin + Member passwordless flows use verifyOtp (6-digit). Default template
+# only includes the magic link — include {{ .Token }} so Mailpit/inbox shows the OTP.
+otp_length = 6
+[auth.email.template.magic_link]
+subject = "Your login code"
+content_path = "./supabase/templates/magic_link.html"
