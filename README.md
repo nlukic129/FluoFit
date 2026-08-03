@@ -32,4 +32,6 @@ pnpm db:reset                 # re-apply migrations from scratch
 **Phase 0 (foundation) done:** schema + RLS + fraud-floor trigger + config engine (all
 migration-tested), adapter ports + stubs, shared types, `fluofit-build` skill. Next:
 **Phase 1 — commercial core** (checkout, Subscription, Box provisioning, Activation).
-Sequencing in [ADR-0014](./docs/adr/0014-stack-monorepo-and-ports.md).
+
+Live progress per phase → [`docs/ROADMAP.md`](./docs/ROADMAP.md); the frozen sequencing
+decision → [ADR-0014](./docs/adr/0014-stack-monorepo-and-ports.md).

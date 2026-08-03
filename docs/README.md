@@ -19,6 +19,7 @@ the human-facing mirror.
 | [`../CLAUDE.md`](../CLAUDE.md) | **How we work** | Conventions, invariants, and this documentation map. |
 | [`SKILLS-GUIDE.md`](./SKILLS-GUIDE.md) | **How to use skills** | Which Claude Code skill to use when, by phase. |
 | [`OPEN-FLOWS.md`](./OPEN-FLOWS.md) | **Known flow gaps** | Which flows have holes, and their status (resolved / open / parked). |
+| [`ROADMAP.md`](./ROADMAP.md) | **Build progress** | Living per-phase status tracker (mirrors [ADR-0014 §4](./adr/0014-stack-monorepo-and-ports.md)). |
 
 ## Decision records (ADRs)
 

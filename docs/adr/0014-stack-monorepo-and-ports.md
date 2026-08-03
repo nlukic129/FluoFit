@@ -105,6 +105,12 @@ swapped when a domain unparks.
 Order follows dependencies (nothing to scan before a Box/Subscription exists), with the riskiest
 piece (offline scan + fraud floor) pulled to Phase 2.
 
+This list is the coarse, frozen decision. The **living, app-first breakdown** — each phase split
+into *App (what you see)* + *Backend (what powers it)*, tracked with status — lives in
+[`docs/ROADMAP.md`](../ROADMAP.md) and is the day-to-day source of truth for progress. App-shell
+scaffolding is the opening deliverable of Phase 1 there (not a separate phase), so every phase
+from Phase 1 on ships a runnable, visible slice.
+
 ## Consequences
 
 - **The `fluofit-build` skill is now the enforced entry point** to every coding session — the

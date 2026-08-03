@@ -25,6 +25,7 @@ rationale → [`docs/SKILLS-GUIDE.md`](./docs/SKILLS-GUIDE.md#before-you-write-c
 | Technology (stack, engines, ports, offline sync) | [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) |
 | Concrete DB schema + RLS policies | [`docs/architecture/data-model.md`](./docs/architecture/data-model.md) |
 | Hard-to-reverse decisions + the why | [`docs/adr/`](./docs/adr/) |
+| Build progress (living per-phase tracker) | [`docs/ROADMAP.md`](./docs/ROADMAP.md) |
 | Throwaway UI experiments | [`docs/prototypes/`](./docs/prototypes/) |
 | Full docs index | [`docs/README.md`](./docs/README.md) |
 
