@@ -44,11 +44,12 @@ its owning doc — **one fact = one place**, never copied here.
 - ⬜ **Member:** minimal account / manage-subscription screen (web + app)
 - ⬜ **Admin:** Box-provisioning screens — batch list, generate, export-to-print, void — [admin-console §4](./product/admin-console.md)
 
-**Backend (what powers it)**
+**Backend (what powers it)** — commercial-core RPCs done + smoke-tested (7 scenarios), `0012`
 - 🟡 Boot local Supabase (`pnpm db:start`) + regenerate real `packages/db` types (`pnpm db:types`) *(moved from Phase 0; needed the moment an app queries the DB)*
 - ⬜ Passwordless auth wiring (email-first) — [ARCHITECTURE §1](./ARCHITECTURE.md#1-authentication--identity-)
-- ⬜ Subscription create; orders via stub `PaymentPort`; first Box ships via stub `FulfillmentPort`
-- ⬜ **Activation** + whole-Subscription transfer on first scan (scanned Box locked); retail Box → **Standalone** branch — [ADR-0012](./adr/0012-identity-checkout-and-box-ownership.md), [ADR-0007](./adr/0007-standalone-gift-retail-box-activation.md)
+- ✅ Subscription create + orders (`fn_create_subscription`, `fn_place_order`, `fn_mark_order_paid`); the app calls stub `PaymentPort` between place & paid, `FulfillmentPort` for shipment — `0012`
+- ✅ **Activation** + whole-Subscription transfer on first scan (scanned Box locked); retail Box → **Standalone** branch (`fn_activate_box`) — [ADR-0012](./adr/0012-identity-checkout-and-box-ownership.md), [ADR-0007](./adr/0007-standalone-gift-retail-box-activation.md)
+- ✅ Box provisioning + void RPCs (`fn_provision_batch`, `fn_void_box`, admin-gated + audited) — [admin-console §4](./product/admin-console.md)
 
 ---
 
