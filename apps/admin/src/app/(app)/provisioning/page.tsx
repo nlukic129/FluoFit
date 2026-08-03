@@ -1,6 +1,7 @@
 "use client";
 
-import { Download, Plus } from "lucide-react";
+import { Download, Plus, Printer } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 import { PageHeader } from "@/components/page-shell";
@@ -22,6 +23,7 @@ const boxTone = (s: string) =>
   s === "activated" ? "success" : s === "void" ? "danger" : "info";
 
 export default function ProvisioningPage() {
+  const router = useRouter();
   const [batches, setBatches] = useState<Batch[]>([]);
   const [boxes, setBoxes] = useState<Box[]>([]);
   const [filter, setFilter] = useState<Filter>("all");
@@ -130,12 +132,13 @@ export default function ProvisioningPage() {
                 <TableHead>Name</TableHead>
                 <TableHead>Units</TableHead>
                 <TableHead>Created</TableHead>
+                <TableHead className="text-right">Labels</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {batches.length === 0 ? (
                 <TableRow>
-                  <TableCell className="text-muted-foreground" colSpan={3}>
+                  <TableCell className="text-muted-foreground" colSpan={4}>
                     No batches yet — generate one to start.
                   </TableCell>
                 </TableRow>
@@ -146,6 +149,15 @@ export default function ProvisioningPage() {
                     <TableCell className="tabular">{b.unit_count}</TableCell>
                     <TableCell className="text-muted-foreground">
                       {new Date(b.created_at).toLocaleDateString("en-US")}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => router.push(`/provisioning/print?batch=${b.id}`)}
+                      >
+                        <Printer /> Print labels
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))

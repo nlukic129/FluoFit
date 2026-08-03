@@ -12,7 +12,7 @@ export function AppSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="flex h-dvh w-60 shrink-0 flex-col border-r border-border bg-sidebar">
+    <aside className="no-print flex h-dvh w-60 shrink-0 flex-col border-r border-border bg-sidebar">
       <div className="flex h-14 items-center gap-2 border-b border-border px-5">
         <div className="h-6 w-6 rounded bg-primary" aria-hidden />
         <span className="text-sm font-semibold tracking-tight">FluoFit Admin</span>

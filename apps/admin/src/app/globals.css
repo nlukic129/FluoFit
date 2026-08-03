@@ -66,3 +66,30 @@ body {
   font-variant-numeric: tabular-nums;
   font-family: var(--font-fira-code), ui-monospace, monospace;
 }
+
+/* Print: hide app chrome and let the label sheet flow across as many pages as needed. */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  html,
+  body {
+    background: #fff;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  /* Neutralise the app shell's fixed height / overflow so content paginates. */
+  .app-shell {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .app-main {
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .app-content {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+}
