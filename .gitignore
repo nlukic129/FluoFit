@@ -7,5 +7,25 @@
 # Vendored skill files are local (like node_modules); the lock is the manifest
 # (like package-lock.json) and IS tracked so `npx skills add` can restore the set.
 .agents/
-.claude/
+
+# Claude Code local config is ignored — EXCEPT our own project skill, which is
+# tracked so every clone/session inherits the stage-gate invariants.
+.claude/*
+!.claude/skills/
+.claude/skills/*
+!.claude/skills/fluofit-build/
+
+# Dependencies & build output
 node_modules/
+dist/
+.turbo/
+*.tsbuildinfo
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+
+# Supabase local
+supabase/.temp/
+supabase/.branches/

@@ -1,0 +1,21 @@
+# FluoFit local Supabase config. Run `npx supabase start` to bring up Postgres + Auth locally.
+project_id = "fluofit"
+
+[db]
+port = 54322
+major_version = 15
+
+[api]
+port = 54321
+schemas = ["public"]
+extra_search_path = ["public", "extensions"]
+
+[studio]
+port = 54323
+
+[auth]
+enable_signup = true
+# Passwordless email-first is the canonical Member entry (ADR-0010, ADR-0012).
+[auth.email]
+enable_signup = true
+enable_confirmations = false
