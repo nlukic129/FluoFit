@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/page-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { rsd } from "@/lib/overview";
 import { supabase } from "@/lib/supabase/client";
 
 type Commission = {
@@ -83,7 +84,7 @@ export default function FraudPage() {
             rows.map((c) => (
               <TableRow key={c.id}>
                 <TableCell className="font-medium">{c.email ?? "—"}</TableCell>
-                <TableCell className="tabular">€{Number(c.amount).toFixed(2)}</TableCell>
+                <TableCell className="tabular">{rsd(c.amount)}</TableCell>
                 <TableCell>
                   <Badge tone={stateTone(c.state)}>{c.state}</Badge>
                 </TableCell>

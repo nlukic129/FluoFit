@@ -8,7 +8,7 @@ import { createClient } from "@supabase/supabase-js";
 const SUPABASE_URL = process.env.SUPABASE_URL ?? "";
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
 
-const BOX_PRICE = 29.9; // placeholder — real pricing pending COGS (ADR-0013)
+const BOX_PRICE = 4000; // RSD
 
 export async function POST(request: Request): Promise<Response> {
   const { email, refillMode, cadenceDays, refCode } = await request.json();

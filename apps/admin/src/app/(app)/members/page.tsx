@@ -1,14 +1,14 @@
 "use client";
 
-import { Search } from "lucide-react";
-import { useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 
 import { PageHeader } from "@/components/page-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Modal } from "@/components/ui/modal";
+import { Select } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/lib/supabase/client";
 
@@ -17,65 +17,127 @@ type Member = {
   email: string | null;
   display_name: string | null;
   sub_status: string | null;
+  city: string | null;
   created_at: string;
+  total_count: number;
 };
 
-type Member360 = {
-  email?: string | null;
-  subscription?: { status?: string; refill_mode?: string; cadence_days?: number | null } | null;
-  progress?: {
-    cumulative_xp?: number;
-    current_level?: number;
-    current_streak?: number;
-    earning_scans_total?: number;
-  } | null;
-  boxes?: { id: string; human_code: string; status: string }[];
-  recent_orders?: { id: string; amount: number; charge_status: string }[];
-};
-
+const PAGE_SIZE = 20;
+const STATUSES = ["active", "lapsed", "paused", "cancelled", "prospect"];
 const subTone = (s: string | null) =>
-  s === "active" ? "success" : s === "lapsed" || s === "cancelled" ? "danger" : "neutral";
+  s === "active" ? "success" : s === "lapsed" || s === "cancelled" ? "danger" : s ? "warning" : "neutral";
 
 export default function MembersPage() {
-  const [query, setQuery] = useState("");
+  const router = useRouter();
+  const [q, setQ] = useState("");
+  const [dq, setDq] = useState(""); // debounced query
+  const [status, setStatus] = useState("");
+  const [city, setCity] = useState("");
+  const [page, setPage] = useState(0);
+
   const [rows, setRows] = useState<Member[]>([]);
+  const [total, setTotal] = useState(0);
+  const [cities, setCities] = useState<{ city: string; members: number }[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selected, setSelected] = useState<Member | null>(null);
-  const [detail, setDetail] = useState<Member360 | null>(null);
 
-  async function runSearch() {
+  // Debounce the search box; reset to first page on new query.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDq(q);
+      setPage(0);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [q]);
+
+  // City filter options (once).
+  useEffect(() => {
+    supabase.rpc("fn_admin_member_cities").then(({ data }) => {
+      if (data) setCities(data as { city: string; members: number }[]);
+    });
+  }, []);
+
+  const load = useCallback(async () => {
+    setLoading(true);
     setError(null);
-    const { data, error: e } = await supabase.rpc("fn_admin_search_members", {
-      p_query: query || null,
+    const { data, error } = await supabase.rpc("fn_admin_list_members", {
+      p_query: dq || null,
+      p_status: status || null,
+      p_city: city || null,
+      p_limit: PAGE_SIZE,
+      p_offset: page * PAGE_SIZE,
     });
-    if (e) setError(e.message);
-    else setRows((data as Member[]) ?? []);
-  }
+    setLoading(false);
+    if (error) setError(error.message);
+    else {
+      const r = (data as Member[]) ?? [];
+      setRows(r);
+      setTotal(r.length ? Number(r[0]!.total_count) : 0);
+    }
+  }, [dq, status, city, page]);
 
-  async function open(member: Member) {
-    setSelected(member);
-    setDetail(null);
-    const { data, error: e } = await supabase.rpc("fn_admin_member_360", {
-      p_profile: member.profile_id,
-    });
-    if (e) setError(e.message);
-    else setDetail(data as Member360);
-  }
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <>
-      <PageHeader title="Members" subtitle="Search members and open their 360 view." />
+      <PageHeader title="Members" subtitle="All members — filter and page through." />
 
-      <div className="mb-4 flex gap-2">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
         <Input
-          placeholder="Search by email or name…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && runSearch()}
+          className="max-w-xs"
+          placeholder="Search email or name…"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
         />
-        <Button onClick={runSearch}>
-          <Search /> Search
-        </Button>
+        <Select
+          className="w-40"
+          value={status}
+          onChange={(e) => {
+            setStatus(e.target.value);
+            setPage(0);
+          }}
+        >
+          <option value="">All statuses</option>
+          {STATUSES.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
+        </Select>
+        <Select
+          className="w-48"
+          value={city}
+          onChange={(e) => {
+            setCity(e.target.value);
+            setPage(0);
+          }}
+        >
+          <option value="">All cities</option>
+          {cities.map((c) => (
+            <option key={c.city} value={c.city}>
+              {c.city} ({c.members})
+            </option>
+          ))}
+        </Select>
+        {(q || status || city) && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setQ("");
+              setStatus("");
+              setCity("");
+              setPage(0);
+            }}
+          >
+            Clear
+          </Button>
+        )}
+        <span className="ml-auto text-sm text-muted-foreground">{total} members</span>
       </div>
 
       {error && <p className="mb-4 text-sm text-destructive">⚠️ {error}</p>}
@@ -85,6 +147,7 @@ export default function MembersPage() {
           <TableRow>
             <TableHead>Email</TableHead>
             <TableHead>Name</TableHead>
+            <TableHead>City</TableHead>
             <TableHead>Subscription</TableHead>
             <TableHead>Joined</TableHead>
           </TableRow>
@@ -92,21 +155,18 @@ export default function MembersPage() {
         <TableBody>
           {rows.length === 0 ? (
             <TableRow>
-              <TableCell className="text-muted-foreground" colSpan={4}>
-                Search to list members.
+              <TableCell className="text-muted-foreground" colSpan={5}>
+                {loading ? "Loading…" : "No members match these filters."}
               </TableCell>
             </TableRow>
           ) : (
             rows.map((m) => (
-              <TableRow key={m.profile_id} className="cursor-pointer" onClick={() => open(m)}>
+              <TableRow key={m.profile_id} className="cursor-pointer" onClick={() => router.push(`/members/${m.profile_id}`)}>
                 <TableCell className="font-medium">{m.email ?? "—"}</TableCell>
                 <TableCell>{m.display_name ?? "—"}</TableCell>
+                <TableCell>{m.city ?? "—"}</TableCell>
                 <TableCell>
-                  {m.sub_status ? (
-                    <Badge tone={subTone(m.sub_status)}>{m.sub_status}</Badge>
-                  ) : (
-                    <Badge tone="neutral">prospect</Badge>
-                  )}
+                  <Badge tone={subTone(m.sub_status)}>{m.sub_status ?? "prospect"}</Badge>
                 </TableCell>
                 <TableCell className="text-muted-foreground">
                   {new Date(m.created_at).toLocaleDateString("en-US")}
@@ -117,99 +177,19 @@ export default function MembersPage() {
         </TableBody>
       </Table>
 
-      <Modal open={selected !== null} onClose={() => setSelected(null)} title={selected?.email ?? "Member"}>
-        {!detail ? (
-          <p className="text-sm text-muted-foreground">Loading…</p>
-        ) : (
-          <MemberDetail member={selected!} detail={detail} onChanged={() => open(selected!)} />
-        )}
-      </Modal>
-    </>
-  );
-}
-
-function MemberDetail({
-  member,
-  detail,
-  onChanged,
-}: {
-  member: Member;
-  detail: Member360;
-  onChanged: () => void;
-}) {
-  const [xp, setXp] = useState("");
-  const [streak, setStreak] = useState("");
-  const [reason, setReason] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
-
-  async function adjust() {
-    setBusy(true);
-    setMsg(null);
-    const { error } = await supabase.rpc("fn_admin_adjust_progress", {
-      p_profile: member.profile_id,
-      p_xp: xp === "" ? null : Number(xp),
-      p_streak: streak === "" ? null : Number(streak),
-      p_reason: reason,
-    });
-    setBusy(false);
-    if (error) setMsg(`⚠️ ${error.message}`);
-    else {
-      setMsg("✓ Progress corrected.");
-      setXp("");
-      setStreak("");
-      setReason("");
-      onChanged();
-    }
-  }
-
-  const p = detail.progress;
-  return (
-    <div className="space-y-4 text-sm">
-      <div className="grid grid-cols-3 gap-3">
-        <Stat label="Level" value={p?.current_level ?? "—"} />
-        <Stat label="XP" value={p?.cumulative_xp ?? "—"} />
-        <Stat label="Streak" value={p?.current_streak ?? "—"} />
-      </div>
-      <div className="text-muted-foreground">
-        Subscription:{" "}
-        <span className="text-foreground">
-          {detail.subscription
-            ? `${detail.subscription.status} · ${detail.subscription.refill_mode}`
-            : "none"}
+      <div className="mt-4 flex items-center justify-between">
+        <span className="text-sm text-muted-foreground">
+          Page {page + 1} of {totalPages}
         </span>
-        <br />
-        Boxes: <span className="text-foreground">{detail.boxes?.length ?? 0}</span> · Orders:{" "}
-        <span className="text-foreground">{detail.recent_orders?.length ?? 0}</span>
-      </div>
-
-      <div className="space-y-2 rounded-md border border-border bg-muted/40 p-3">
-        <p className="font-medium">Correct XP / Streak (audited)</p>
-        <div className="grid grid-cols-2 gap-2">
-          <div className="space-y-1">
-            <Label htmlFor="xp">XP</Label>
-            <Input id="xp" type="number" placeholder="unchanged" value={xp} onChange={(e) => setXp(e.target.value)} />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="streak">Streak</Label>
-            <Input id="streak" type="number" placeholder="unchanged" value={streak} onChange={(e) => setStreak(e.target.value)} />
-          </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" disabled={page <= 0} onClick={() => setPage((p) => p - 1)}>
+            <ChevronLeft /> Prev
+          </Button>
+          <Button variant="outline" size="sm" disabled={page + 1 >= totalPages} onClick={() => setPage((p) => p + 1)}>
+            Next <ChevronRight />
+          </Button>
         </div>
-        <Input placeholder="Reason (required)" value={reason} onChange={(e) => setReason(e.target.value)} />
-        <Button size="sm" disabled={!reason.trim() || busy} onClick={adjust}>
-          {busy ? "Saving…" : "Apply correction"}
-        </Button>
-        {msg && <p className="text-xs">{msg}</p>}
       </div>
-    </div>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="rounded-md border border-border bg-card p-3">
-      <div className="text-xs text-muted-foreground">{label}</div>
-      <div className="tabular text-lg font-semibold">{value}</div>
-    </div>
+    </>
   );
 }

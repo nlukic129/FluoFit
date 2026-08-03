@@ -19,22 +19,42 @@ export function AppSidebar() {
       </div>
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto p-3">
-        {NAV.map(({ label, href, icon: Icon }) => {
+        {NAV.map(({ label, href, icon: Icon, children }) => {
           const active = pathname === href || pathname.startsWith(`${href}/`);
           return (
-            <Link
-              key={href}
-              href={href}
-              className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                active
-                  ? "bg-sidebar-accent text-primary"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
+            <div key={href}>
+              <Link
+                href={href}
+                className={cn(
+                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                  active
+                    ? "bg-sidebar-accent text-primary"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                )}
+              >
+                <Icon className="size-4 shrink-0" />
+                {label}
+              </Link>
+              {children && active && (
+                <div className="ml-[26px] mt-0.5 space-y-0.5 border-l border-border pl-2">
+                  {children.map((c) => {
+                    const cActive = pathname === c.href;
+                    return (
+                      <Link
+                        key={c.href}
+                        href={c.href}
+                        className={cn(
+                          "block rounded px-2 py-1 text-[13px] transition-colors",
+                          cActive ? "font-medium text-primary" : "text-muted-foreground hover:text-foreground",
+                        )}
+                      >
+                        {c.label}
+                      </Link>
+                    );
+                  })}
+                </div>
               )}
-            >
-              <Icon className="size-4 shrink-0" />
-              {label}
-            </Link>
+            </div>
           );
         })}
       </nav>

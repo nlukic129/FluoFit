@@ -13,11 +13,24 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-export type NavItem = { label: string; href: string; icon: LucideIcon };
+export type NavChild = { label: string; href: string };
+export type NavItem = { label: string; href: string; icon: LucideIcon; children?: NavChild[] };
 
-// Sidebar information architecture (admin-console.md modules).
+// Sidebar information architecture (admin-console.md modules). Overview has sub-pages.
 export const NAV: NavItem[] = [
-  { label: "Overview", href: "/overview", icon: LayoutDashboard },
+  {
+    label: "Overview",
+    href: "/overview",
+    icon: LayoutDashboard,
+    children: [
+      { label: "Summary", href: "/overview" },
+      { label: "Financial", href: "/overview/financial" },
+      { label: "Growth", href: "/overview/growth" },
+      { label: "Retention", href: "/overview/retention" },
+      { label: "Referrers", href: "/overview/referrers" },
+      { label: "Operations", href: "/overview/operations" },
+    ],
+  },
   { label: "Provisioning", href: "/provisioning", icon: Boxes },
   { label: "Members", href: "/members", icon: Users },
   { label: "Support", href: "/support", icon: LifeBuoy },

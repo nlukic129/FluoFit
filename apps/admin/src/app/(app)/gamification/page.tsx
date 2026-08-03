@@ -22,7 +22,7 @@ export default function GamificationPage() {
     <>
       <PageHeader
         title="Gamification"
-        subtitle="Levels, perks, and referral dials. Changes are audited and grandfathered per ADR-0013."
+        subtitle="Levels, perks, and referral dials. Changes are audited and grandfathered."
       />
       {error && <p className="mb-4 text-sm text-destructive">⚠️ {error}</p>}
       <div className="space-y-6">
@@ -183,7 +183,7 @@ function LevelModal({
 type Dial = { key: string; label: string; help: string };
 const DIALS: Dial[] = [
   { key: "agent.eligibility_level", label: "Agent eligibility Level", help: "Level a Member must reach to apply." },
-  { key: "buyer.discount_pct", label: "Buyer discount %", help: "Applies to new buyers only (ADR-0004)." },
+  { key: "buyer.discount_pct", label: "Buyer discount %", help: "Applies to new buyers only." },
   { key: "agent.tier_rates", label: "Agent tier rates (JSON)", help: "Live at the next monthly snapshot." },
 ];
 
@@ -359,7 +359,7 @@ function PerksSection({ onError }: { onError: (m: string) => void }) {
                   <TableCell>
                     <Badge tone={fundingTone(p.funding)}>{p.funding}</Badge>
                   </TableCell>
-                  <TableCell className="tabular">{p.cost_hint != null ? `€${p.cost_hint}` : "—"}</TableCell>
+                  <TableCell className="tabular">{p.cost_hint != null ? `${p.cost_hint} RSD` : "—"}</TableCell>
                   <TableCell className="text-right">
                     <Button size="sm" variant="outline" onClick={() => setEditing(p)}>
                       Edit
@@ -473,7 +473,7 @@ function PerkModal({
         </Select>
       </div>
       <div className="space-y-1.5">
-        <Label>Cost hint (€, optional)</Label>
+        <Label>Cost hint (RSD, optional)</Label>
         <Input type="number" value={cost} onChange={(e) => setCost(e.target.value)} />
       </div>
       <div className="space-y-1.5">

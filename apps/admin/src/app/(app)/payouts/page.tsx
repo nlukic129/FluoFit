@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { rsd } from "@/lib/overview";
 import { supabase } from "@/lib/supabase/client";
 
 type Line = {
@@ -45,7 +46,7 @@ export default function PayoutsPage() {
 
   return (
     <>
-      <PageHeader title="Payouts" subtitle="Monthly statement of payable commissions → the agency (ADR-0008)." />
+      <PageHeader title="Payouts" subtitle="Monthly statement of payable commissions → the agency." />
       {error && <p className="mb-4 text-sm text-destructive">⚠️ {error}</p>}
 
       <Card className="mb-6">
@@ -86,7 +87,7 @@ export default function PayoutsPage() {
                     <TableCell className="font-medium">{l.email ?? "—"}</TableCell>
                     <TableCell className="tabular">{l.ref_code}</TableCell>
                     <TableCell className="tabular">{l.commission_count}</TableCell>
-                    <TableCell className="tabular">€{Number(l.total).toFixed(2)}</TableCell>
+                    <TableCell className="tabular">{rsd(l.total)}</TableCell>
                     <TableCell className="text-right">
                       <Button size="sm" variant="outline" onClick={() => markPaid(l)}>
                         Mark paid
@@ -98,7 +99,7 @@ export default function PayoutsPage() {
                   <TableCell className="font-semibold" colSpan={3}>
                     Total
                   </TableCell>
-                  <TableCell className="tabular font-semibold">€{grandTotal.toFixed(2)}</TableCell>
+                  <TableCell className="tabular font-semibold">{rsd(grandTotal)}</TableCell>
                   <TableCell />
                 </TableRow>
               </>

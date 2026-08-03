@@ -38,6 +38,7 @@ the human-facing mirror.
 - [ADR-0013](./adr/0013-dynamic-config-grandfathering-and-manual-margin.md) — Gamification & referral config is Admin-dynamic; grandfathering differs by dial; checkpoint XP; margin safety human-managed (calculator), not enforced
 - [ADR-0014](./adr/0014-stack-monorepo-and-ports.md) — Stack & monorepo shape (Expo universal Member app + Expo-web partners/admin, Supabase); invariants in shared packages; parked integrations behind adapter ports
 - [ADR-0015](./adr/0015-admin-nextjs-and-design-language.md) — Admin Console on Next.js + Tailwind + shadcn-style; light-mode, English, desktop-first design language (invokes ADR-0014's escape hatch)
+- [ADR-0016](./adr/0016-delivery-address-and-places.md) — Delivery address + city captured at checkout via Google Places (PlacesPort); city drives admin filtering + intake targeting
 
 ## Adding to the docs
 

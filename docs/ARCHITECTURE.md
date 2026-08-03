@@ -49,9 +49,11 @@ Where the invariants execute (all server-side, in Edge Functions + `pg_cron`):
 | **commission-engine** | Edge Function + cron | `Accrued→Cleared(30d)→Payable→Paid`; clawback; first-payout gate |
 | **config-apply** | Edge Function | per-dial grandfathering ([ADR-0013](./adr/0013-dynamic-config-grandfathering-and-manual-margin.md)) |
 
-**Ports / adapters** ([ADR-0014](./adr/0014-stack-monorepo-and-ports.md)): parked domains are
-TypeScript interfaces in `packages/core` — `PaymentPort`, `FulfillmentPort`, `PayoutPort`,
-`NotifyPort`. v1 ships **stubs that simulate the real async state machines** (via the `outbox`
+**Ports / adapters** ([ADR-0014](./adr/0014-stack-monorepo-and-ports.md)): parked/third-party
+domains are TypeScript interfaces in `packages/core` — `PaymentPort`, `FulfillmentPort`,
+`PayoutPort`, `NotifyPort`, and **`PlacesPort`** (Google Places address/city autocomplete at
+checkout — [ADR-0016](./adr/0016-delivery-address-and-places.md); city drives admin filtering +
+intake targeting). v1 ships **stubs that simulate the real async state machines** (via the `outbox`
 table + an `adapter-webhook-sim` Edge Function), so benefit clock / refill / Streak-freeze
 behave as in production. Unparking a domain is a **port swap**, not a rewrite.
 
