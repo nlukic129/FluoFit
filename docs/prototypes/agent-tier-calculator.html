@@ -1,0 +1,389 @@
+<title>FluoFit — Agent tier kalkulator</title>
+
+<style>
+  :root {
+    --bg: #EBEFEE; --surface: #FFFFFF; --surface-2: #F4F7F6; --border: #DBE2E0;
+    --border-strong: #C6D0CD; --text: #14201E; --dim: #566863; --faint: #869590;
+    --accent: #1C8A6A; --accent-soft: rgba(28,138,106,.12); --good: #1C8A6A;
+    --good-soft: rgba(28,138,106,.12); --bad: #C34A3F; --bad-soft: rgba(195,74,63,.12);
+    --gold: #B58A32; --shadow: 0 1px 2px rgba(20,32,30,.04), 0 8px 24px rgba(20,32,30,.06);
+    --mono: ui-monospace, "SF Mono", "SFMono-Regular", "Menlo", "Consolas", monospace;
+    --ui: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0B1110; --surface: #131B19; --surface-2: #0F1615; --border: #22302C;
+      --border-strong: #2C3B37; --text: #E7EDEB; --dim: #96A6A1; --faint: #64736E;
+      --accent: #46C79E; --accent-soft: rgba(70,199,158,.14); --good: #46C79E;
+      --good-soft: rgba(70,199,158,.14); --bad: #E4685C; --bad-soft: rgba(228,104,92,.15);
+      --gold: #D6B25C; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #EBEFEE; --surface: #FFFFFF; --surface-2: #F4F7F6; --border: #DBE2E0;
+    --border-strong: #C6D0CD; --text: #14201E; --dim: #566863; --faint: #869590;
+    --accent: #1C8A6A; --accent-soft: rgba(28,138,106,.12); --good: #1C8A6A;
+    --good-soft: rgba(28,138,106,.12); --bad: #C34A3F; --bad-soft: rgba(195,74,63,.12);
+    --gold: #B58A32; --shadow: 0 1px 2px rgba(20,32,30,.04), 0 8px 24px rgba(20,32,30,.06);
+  }
+  :root[data-theme="dark"] {
+    --bg: #0B1110; --surface: #131B19; --surface-2: #0F1615; --border: #22302C;
+    --border-strong: #2C3B37; --text: #E7EDEB; --dim: #96A6A1; --faint: #64736E;
+    --accent: #46C79E; --accent-soft: rgba(70,199,158,.14); --good: #46C79E;
+    --good-soft: rgba(70,199,158,.14); --bad: #E4685C; --bad-soft: rgba(228,104,92,.15);
+    --gold: #D6B25C; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  .page { background: var(--bg); color: var(--text); font-family: var(--ui); min-height: 100vh; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 36px 22px 72px; }
+
+  header { position: relative; margin-bottom: 22px; }
+  .glow { position: absolute; top: -50px; left: -40px; width: 300px; height: 180px; background: radial-gradient(closest-side, var(--gold), transparent 70%); opacity: .16; pointer-events: none; filter: blur(6px); }
+  .eyebrow { font-size: 12px; letter-spacing: .22em; text-transform: uppercase; color: var(--gold); font-weight: 600; margin: 0 0 10px; }
+  h1 { font-size: clamp(24px, 3.6vw, 34px); font-weight: 650; letter-spacing: -.02em; margin: 0; text-wrap: balance; line-height: 1.1; }
+  .sub { color: var(--dim); margin: 10px 0 0; max-width: 78ch; font-size: 14.5px; }
+  .sub a { color: var(--accent); }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 13px; box-shadow: var(--shadow); padding: 15px 17px; margin-bottom: 14px; }
+  .card > h3 { font-size: 10.5px; letter-spacing: .09em; text-transform: uppercase; color: var(--accent); margin: 0 0 12px; font-weight: 700; }
+
+  .grid { display: flex; flex-wrap: wrap; gap: 14px 18px; align-items: flex-end; }
+  .fld { display: flex; flex-direction: column; gap: 5px; }
+  .fld label { font-size: 11.5px; color: var(--dim); font-weight: 600; line-height: 1.25; }
+  .fld label span { color: var(--faint); font-weight: 400; }
+  .fld .ib { display: flex; align-items: center; gap: 6px; }
+  .u { font-size: 11.5px; color: var(--faint); }
+  input[type="number"] { font-family: var(--mono); font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; background: var(--surface-2); color: var(--text); border: 1px solid var(--border); border-radius: 7px; padding: 5px 8px; width: 92px; text-align: right; }
+  input[type="number"]:focus-visible, select:focus-visible, input[type="text"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+  select { font-family: var(--ui); font-size: 13px; padding: 5px 8px; border-radius: 7px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); }
+
+  .levels { display: flex; flex-direction: column; gap: 8px; }
+  .lvl { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .lvl .tag { font-size: 11px; font-weight: 700; color: var(--accent); background: var(--accent-soft); padding: 3px 10px; border-radius: 999px; min-width: 34px; text-align: center; }
+  .lvl .lb { font-size: 11.5px; color: var(--faint); font-weight: 600; }
+  .btn { font-family: var(--ui); font-size: 12.5px; font-weight: 600; padding: 7px 12px; border-radius: 8px; cursor: pointer; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); }
+  .btn:hover { border-color: var(--border-strong); }
+  .btn.accent { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+  .btn.accent:hover { background: var(--accent); color: #fff; }
+  .btn.danger:hover { border-color: var(--bad); color: var(--bad); }
+  .rm { border: 1px solid var(--border); background: transparent; color: var(--faint); border-radius: 7px; width: 27px; height: 27px; cursor: pointer; font-size: 16px; line-height: 1; flex-shrink: 0; }
+  .rm:hover { color: var(--bad); border-color: var(--bad); }
+  .addrow { margin-top: 4px; }
+
+  .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 14px; }
+  .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 13px; padding: 14px 16px; box-shadow: var(--shadow); }
+  .kpi .label { font-size: 11px; letter-spacing: .05em; text-transform: uppercase; color: var(--faint); font-weight: 600; line-height: 1.3; }
+  .kpi .val { font-family: var(--mono); font-size: clamp(18px, 2.5vw, 24px); font-weight: 600; margin-top: 6px; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+  .kpi .val small { font-size: 13px; color: var(--dim); font-weight: 500; }
+
+  .tablecard { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 760px; }
+  th, td { padding: 8px 10px; text-align: right; white-space: nowrap; }
+  th { font-size: 10px; letter-spacing: .04em; text-transform: uppercase; color: var(--faint); font-weight: 700; border-bottom: 1px solid var(--border-strong); }
+  th:first-child, td:first-child { text-align: left; }
+  td { font-family: var(--mono); font-variant-numeric: tabular-nums; border-bottom: 1px solid var(--border); color: var(--text); }
+  tr:last-child td { border-bottom: 0; }
+  td.dim { color: var(--dim); }
+  .tag2 { font-weight: 700; color: var(--accent); background: var(--accent-soft); padding: 2px 9px; border-radius: 999px; font-family: var(--ui); }
+  .ok { color: var(--good); font-weight: 650; }
+  .no { color: var(--bad); font-weight: 650; }
+  tr.bad td { background: var(--bad-soft); }
+  .pos { color: var(--good); } .negc { color: var(--bad); }
+  .tcap { font-size: 12.5px; color: var(--dim); margin: 0 0 12px; }
+  .tcap b { color: var(--text); font-family: var(--mono); font-weight: 650; }
+
+  .scenarios { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .scenarios .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); font-weight: 700; margin-right: 2px; }
+  .scenarios .sep { width: 1px; align-self: stretch; background: var(--border); margin: 2px 4px; }
+  .scenarios input[type="text"] { width: 150px; font-size: 13px; }
+  .toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 600; box-shadow: var(--shadow); opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 100; }
+  .toast.show { opacity: 1; }
+
+  footer { margin-top: 24px; font-size: 12.5px; color: var(--faint); line-height: 1.65; }
+  footer b { color: var(--dim); font-weight: 600; }
+
+  @media (max-width: 700px) { .summary { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 440px) { .summary { grid-template-columns: 1fr; } .wrap { padding: 26px 14px 56px; } }
+</style>
+
+<div class="page">
+  <div class="wrap">
+    <header>
+      <div class="glow"></div>
+      <p class="eyebrow">FluoFit · Agent tier</p>
+      <h1>Agent levovi — planiraj granice i proviziju da ostane profitabilno</h1>
+      <p class="sub">Praviš Agentu <b>levele</b>: svaki ima <b>granicu u kumulativno prodatim kutijama</b> i <b>proviziju %</b>. Stopa je <b>marginalna</b> — svaka kutija nosi % benda u kom je prodata. Alat pokazuje <b>FluoFit maržu po kutiji</b> na svakom levelu (zeleno/crveno vs tvoj prag), <b>koliko je marže „u banci"</b> dok Agent stigne do svake granice, i <b>agregat</b> za zadati ukupan volumen. Ekonomija po kutiji je referred pretplatnik (popust + provizija su FluoFit trošak) — ista logika kao <a href="./per-user-ltv-calculator.html">per-user LTV</a>.</p>
+    </header>
+
+    <div class="card">
+      <h3>Ekonomija po kutiji (referred pretplatnik)</h3>
+      <div class="grid">
+        <div class="fld"><label>MP cena / kutija <span>(sa PDV)</span></label><div class="ib"><input type="number" id="price" value="4000" step="100"><span class="u">din</span></div></div>
+        <div class="fld"><label>COGS / kutija</label><div class="ib"><input type="number" id="cogs" value="1000" step="50"><span class="u">din</span></div></div>
+        <div class="fld"><label>PDV</label><div class="ib"><input type="number" id="pdv" value="20" step="1"><span class="u">%</span></div></div>
+        <div class="fld"><label>Payment procesor</label><div class="ib"><input type="number" id="pay" value="2.5" step="0.1"><span class="u">%</span></div></div>
+        <div class="fld"><label>Popust kupcu</label><div class="ib"><input type="number" id="disc" value="10" step="1"><span class="u">%</span></div></div>
+        <div class="fld"><label>Osnovica provizije</label><div class="ib"><select id="commBase"><option value="full">MP puna cena</option><option value="net">Naplaćeno (posle popusta)</option></select></div></div>
+        <div class="fld"><label>Min. FluoFit marža / kutija <span>(prag)</span></label><div class="ib"><input type="number" id="floor" value="1500" step="50"><span class="u">din</span></div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Agent levovi (granica u kutijama + provizija)</h3>
+      <div class="levels" id="levels"></div>
+      <button class="btn accent addrow" id="addLvl">+ Dodaj level</button>
+    </div>
+
+    <div class="card">
+      <h3>Agregatni scenario</h3>
+      <div class="grid">
+        <div class="fld"><label>Ukupno kutija koje Agent proda</label><div class="ib"><input type="number" id="aggBoxes" value="1000" step="50"><span class="u">kutija</span></div></div>
+      </div>
+    </div>
+
+    <div class="summary">
+      <div class="kpi"><div class="label">Agentov level @ volumenu</div><div class="val" id="k_lvl">—</div></div>
+      <div class="kpi"><div class="label">Agent — ukupna provizija</div><div class="val" id="k_agent">—</div></div>
+      <div class="kpi"><div class="label">FluoFit — ukupna marža</div><div class="val" id="k_fluo">—</div></div>
+      <div class="kpi"><div class="label">Blended FluoFit marža</div><div class="val" id="k_bl">—</div></div>
+    </div>
+
+    <div class="card tablecard">
+      <p class="tcap" id="tcap"></p>
+      <table id="tbl">
+        <thead>
+          <tr>
+            <th>Level</th><th>Kutije (bend)</th><th>Provizija %</th><th>FluoFit marža/kutija</th><th>Marža %</th>
+            <th>Agent/kutija</th><th>Banka do granice</th><th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="scenarios">
+        <span class="lbl">Scenariji</span>
+        <input type="text" id="scName" placeholder="ime scenarija…">
+        <button class="btn accent" id="scSave">Sačuvaj</button>
+        <div class="sep"></div>
+        <select id="scList"><option value="">— sačuvani —</option></select>
+        <button class="btn" id="scLoad">Učitaj</button>
+        <button class="btn danger" id="scDel">Obriši</button>
+        <div class="sep"></div>
+        <button class="btn" id="scExport">⬇ Izvezi</button>
+        <button class="btn" id="scImport">⬆ Uvezi</button>
+        <input type="file" id="scFile" accept="application/json" hidden>
+      </div>
+    </div>
+
+    <footer>
+      <b>Kako se čita.</b> <b>FluoFit marža/kutija</b> = neto prihod (bez PDV, sa popustom) − COGS − payment − provizija tog levela. Pada kako % raste. ·
+      <b>Status</b> = zeleno ako je marža/kutija ≥ tvoj prag, crveno ispod (ceo red se oboji). ·
+      <b>Banka do granice</b> = koliko je FluoFit ukupno zaradio od tog Agenta dok stigne do te granice (sve kutije do praga po stopama bendova) — pokazuje da je već doneo profitabilan volumen pre nego što % skoči. ·
+      <b>Marginalno:</b> kutija #N nosi % benda u kom se nalazi; nema retroaktive. ·
+      <b>Agregat:</b> za zadati ukupan volumen sabere po bendovima — agentova provizija, FluoFit marža, blended marža %, i na kom je levelu. ·
+      Level se meri na <b>kumulativno prodatim kutijama</b> (odmak od docs §2 koji koristi broj aktivnih subs — beleška za kasnije usklađivanje). ·
+      Throwaway prototip; brojevi su placeholderi dok se ne fiksira COGS/cena.
+    </footer>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  function fmt(n) {
+    var neg = n < 0; n = Math.round(Math.abs(n));
+    var s = n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    return (neg ? "−" : "") + s;
+  }
+  function pc(n) { return (Math.round(n * 10) / 10).toString().replace(".", ","); }
+  function num(id) { var v = parseFloat(document.getElementById(id).value); return isNaN(v) ? 0 : v; }
+  function cls(v) { return v >= 0 ? "pos" : "negc"; }
+
+  var levels = [{ from: 1, comm: 8 }, { from: 300, comm: 10 }, { from: 800, comm: 12 }];
+
+  var levelsEl = document.getElementById("levels");
+  function renderLevels() {
+    levelsEl.innerHTML = "";
+    levels.forEach(function (L, i) {
+      var row = document.createElement("div");
+      row.className = "lvl";
+      row.innerHTML =
+        '<span class="tag">L' + (i + 1) + '</span>' +
+        '<span class="lb">Od kutije</span><input type="number" data-i="' + i + '" data-k="from" value="' + L.from + '" step="10" min="1" style="width:84px">' +
+        '<span class="lb">Provizija</span><input type="number" data-i="' + i + '" data-k="comm" value="' + L.comm + '" step="0.5" style="width:74px"><span class="u">%</span>' +
+        '<button class="rm" data-rm="' + i + '" title="Ukloni" aria-label="Ukloni">×</button>';
+      levelsEl.appendChild(row);
+    });
+    levelsEl.querySelectorAll("input").forEach(function (el) {
+      el.addEventListener("input", function () {
+        levels[+el.dataset.i][el.dataset.k] = parseFloat(el.value) || 0;
+        recompute();
+      });
+    });
+    levelsEl.querySelectorAll("[data-rm]").forEach(function (b) {
+      b.addEventListener("click", function () { if (levels.length > 1) { levels.splice(+b.dataset.rm, 1); renderLevels(); recompute(); } });
+    });
+  }
+
+  function recompute() {
+    var price = num("price"), cogs = num("cogs"), pdv = num("pdv") / 100, pay = num("pay") / 100, disc = num("disc") / 100;
+    var commFull = document.getElementById("commBase").value === "full";
+    var floor = num("floor");
+    var custPrice = price * (1 - disc);
+    var netRev = custPrice / (1 + pdv);
+    var payFee = custPrice * pay;
+    var commBaseVal = commFull ? price : custPrice;
+    function agentBox(c) { return commBaseVal * c / 100; }
+    function fluoBox(c) { return netRev - cogs - payFee - agentBox(c); }
+
+    // sortirani bendovi (po granici)
+    var s = levels.map(function (L, i) { return { from: Math.max(1, Math.round(L.from)), comm: L.comm, oi: i }; })
+      .sort(function (a, b) { return a.from - b.from; });
+    function bandEnd(i) { return i + 1 < s.length ? s[i + 1].from - 1 : Infinity; }
+    function cum(n, pick) {
+      if (n <= 0) return 0;
+      var t = 0;
+      for (var i = 0; i < s.length; i++) {
+        var lo = s[i].from, hi = Math.min(bandEnd(i), n);
+        if (hi >= lo) t += (hi - lo + 1) * pick(s[i].comm);
+      }
+      return t;
+    }
+    function levelAt(n) { var idx = -1; for (var i = 0; i < s.length; i++) { if (n >= s[i].from) idx = i; } return idx; }
+
+    // ladder tabela (sortirano)
+    var tbody = document.getElementById("tbody");
+    tbody.innerHTML = "";
+    s.forEach(function (L, i) {
+      var end = bandEnd(i);
+      var range = fmt(L.from) + (end === Infinity ? "+" : "–" + fmt(end));
+      var fb = fluoBox(L.comm), ab = agentBox(L.comm);
+      var mpct = netRev > 0 ? fb / netRev * 100 : 0;
+      var banked = cum(L.from - 1, function (c) { return fluoBox(c); });
+      var okp = fb >= floor;
+      var tr = document.createElement("tr");
+      if (!okp) tr.className = "bad";
+      tr.innerHTML =
+        '<td><span class="tag2">L' + (i + 1) + "</span></td>" +
+        "<td>" + range + "</td>" +
+        "<td>" + pc(L.comm) + " %</td>" +
+        '<td class="' + cls(fb) + '">' + fmt(fb) + " din</td>" +
+        '<td class="dim">' + pc(mpct) + " %</td>" +
+        "<td>" + fmt(ab) + " din</td>" +
+        '<td class="dim">' + fmt(banked) + " din</td>" +
+        '<td class="' + (okp ? "ok" : "no") + '">' + (okp ? "✓ ok" : "✗ ispod praga") + "</td>";
+      tbody.appendChild(tr);
+    });
+
+    // agregat
+    var N = Math.max(0, Math.round(num("aggBoxes")));
+    var agentTot = cum(N, function (c) { return agentBox(c); });
+    var fluoTot = cum(N, function (c) { return fluoBox(c); });
+    var bl = N > 0 ? fluoTot / (N * netRev) * 100 : 0;
+    var li = levelAt(N);
+
+    document.getElementById("k_lvl").innerHTML = (li >= 0 ? "L" + (li + 1) : "—") + ' <small>@ ' + fmt(N) + " kut.</small>";
+    document.getElementById("k_lvl").className = "val";
+    document.getElementById("k_agent").innerHTML = fmt(agentTot) + ' <small>din</small>';
+    document.getElementById("k_agent").className = "val";
+    document.getElementById("k_fluo").innerHTML = fmt(fluoTot) + ' <small>din</small>';
+    document.getElementById("k_fluo").className = "val " + cls(fluoTot);
+    document.getElementById("k_bl").innerHTML = pc(bl) + ' <small>%</small>';
+    document.getElementById("k_bl").className = "val " + cls(bl);
+
+    var anyBad = s.some(function (L) { return fluoBox(L.comm) < floor; });
+    document.getElementById("tcap").innerHTML =
+      "Prag: FluoFit marža/kutija ≥ <b>" + fmt(floor) + " din</b> · " +
+      (anyBad ? '<span class="no">neki level je ispod praga</span>' : '<span class="ok">svi levovi iznad praga</span>') +
+      " · pri " + fmt(N) + " kutija Agent uzme <b>" + fmt(agentTot) + " din</b>, FluoFit zadrži <b>" + fmt(fluoTot) + " din</b> (blended " + pc(bl) + "%).";
+  }
+
+  ["price", "cogs", "pdv", "pay", "disc", "floor", "aggBoxes"].forEach(function (id) {
+    document.getElementById(id).addEventListener("input", recompute);
+  });
+  document.getElementById("commBase").addEventListener("change", recompute);
+  document.getElementById("addLvl").addEventListener("click", function () {
+    var last = levels[levels.length - 1] || { from: 0, comm: 8 };
+    levels.push({ from: (last.from || 0) + 500, comm: last.comm + 2 });
+    renderLevels(); recompute();
+  });
+
+  /* ---------- Scenariji (localStorage + JSON) ---------- */
+  var LS_KEY = "fluofit_agent_tier_v1";
+  var IDS = ["price", "cogs", "pdv", "pay", "disc", "commBase", "floor", "aggBoxes"];
+  var toastEl = document.getElementById("toast"), toastTimer;
+  function toast(m) { toastEl.textContent = m; toastEl.classList.add("show"); clearTimeout(toastTimer); toastTimer = setTimeout(function () { toastEl.classList.remove("show"); }, 2300); }
+  function loadStore() { try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch (e) { return {}; } }
+  function saveStore(o) { try { localStorage.setItem(LS_KEY, JSON.stringify(o)); return true; } catch (e) { toast("Čuvanje nije uspelo"); return false; } }
+  function getState() {
+    var s = { fields: {}, levels: levels.map(function (L) { return { from: L.from, comm: L.comm }; }) };
+    IDS.forEach(function (id) { s.fields[id] = document.getElementById(id).value; });
+    return s;
+  }
+  function setState(st) {
+    if (!st) return;
+    if (st.fields) IDS.forEach(function (id) { if (st.fields[id] !== undefined) document.getElementById(id).value = st.fields[id]; });
+    levels = (st.levels && st.levels.length) ? st.levels.map(function (L) { return { from: +L.from || 1, comm: +L.comm || 0 }; }) : [{ from: 1, comm: 8 }];
+    renderLevels(); recompute();
+  }
+  function refreshList(sel) {
+    var store = loadStore(), names = Object.keys(store).sort(), el = document.getElementById("scList");
+    el.innerHTML = "";
+    var o0 = document.createElement("option");
+    o0.value = ""; o0.textContent = names.length ? "— sačuvani (" + names.length + ") —" : "— nema sačuvanih —";
+    el.appendChild(o0);
+    names.forEach(function (n) { var o = document.createElement("option"); o.value = n; o.textContent = n; el.appendChild(o); });
+    if (sel) el.value = sel;
+  }
+  document.getElementById("scSave").addEventListener("click", function () {
+    var name = document.getElementById("scName").value.trim();
+    if (!name) { toast("Upiši ime scenarija"); return; }
+    var store = loadStore(), existed = !!store[name];
+    store[name] = getState();
+    if (saveStore(store)) { refreshList(name); toast(existed ? "Ažuriran: " + name : "Sačuvan: " + name); }
+  });
+  document.getElementById("scLoad").addEventListener("click", function () {
+    var name = document.getElementById("scList").value;
+    if (!name) { toast("Izaberi scenario"); return; }
+    var store = loadStore();
+    if (!store[name]) { toast("Ne postoji"); return; }
+    setState(store[name]); document.getElementById("scName").value = name; toast("Učitan: " + name);
+  });
+  document.getElementById("scDel").addEventListener("click", function () {
+    var name = document.getElementById("scList").value;
+    if (!name) { toast("Izaberi scenario"); return; }
+    if (!window.confirm("Obrisati „" + name + "”?")) return;
+    var store = loadStore(); delete store[name]; saveStore(store); refreshList(); toast("Obrisan: " + name);
+  });
+  document.getElementById("scExport").addEventListener("click", function () {
+    var store = loadStore();
+    if (!Object.keys(store).length) { toast("Nema scenarija"); return; }
+    var blob = new Blob([JSON.stringify(store, null, 2)], { type: "application/json" });
+    var url = URL.createObjectURL(blob), a = document.createElement("a");
+    a.href = url; a.download = "fluofit-agent-tier-scenariji.json"; document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url); toast("Izvezeno " + Object.keys(store).length);
+  });
+  document.getElementById("scImport").addEventListener("click", function () { document.getElementById("scFile").click(); });
+  document.getElementById("scFile").addEventListener("change", function (e) {
+    var file = e.target.files[0]; if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var imp = JSON.parse(reader.result), store = loadStore(), n = 0;
+        for (var k in imp) { if (imp[k] && imp[k].fields) { store[k] = imp[k]; n++; } }
+        if (!n) { toast("Fajl bez scenarija"); return; }
+        saveStore(store); refreshList(); toast("Uvezeno " + n);
+      } catch (err) { toast("Neispravan JSON"); }
+    };
+    reader.readAsText(file); e.target.value = "";
+  });
+
+  renderLevels();
+  recompute();
+  refreshList();
+})();
+</script>

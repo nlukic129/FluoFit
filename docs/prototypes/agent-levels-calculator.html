@@ -1,0 +1,287 @@
+<title>FluoFit — Agent levovi (komisija po kutijama)</title>
+
+<style>
+  :root {
+    --bg: #EBEFEE; --surface: #FFFFFF; --surface-2: #F4F7F6; --border: #DBE2E0;
+    --border-strong: #C6D0CD; --text: #14201E; --dim: #566863; --faint: #869590;
+    --accent: #1C8A6A; --accent-soft: rgba(28,138,106,.12); --good: #1C8A6A;
+    --gold: #B58A32; --shadow: 0 1px 2px rgba(20,32,30,.04), 0 8px 24px rgba(20,32,30,.06);
+    --mono: ui-monospace, "SF Mono", "SFMono-Regular", "Menlo", "Consolas", monospace;
+    --ui: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0B1110; --surface: #131B19; --surface-2: #0F1615; --border: #22302C;
+      --border-strong: #2C3B37; --text: #E7EDEB; --dim: #96A6A1; --faint: #64736E;
+      --accent: #46C79E; --accent-soft: rgba(70,199,158,.14); --good: #46C79E;
+      --gold: #D6B25C; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #EBEFEE; --surface: #FFFFFF; --surface-2: #F4F7F6; --border: #DBE2E0;
+    --border-strong: #C6D0CD; --text: #14201E; --dim: #566863; --faint: #869590;
+    --accent: #1C8A6A; --accent-soft: rgba(28,138,106,.12); --good: #1C8A6A;
+    --gold: #B58A32; --shadow: 0 1px 2px rgba(20,32,30,.04), 0 8px 24px rgba(20,32,30,.06);
+  }
+  :root[data-theme="dark"] {
+    --bg: #0B1110; --surface: #131B19; --surface-2: #0F1615; --border: #22302C;
+    --border-strong: #2C3B37; --text: #E7EDEB; --dim: #96A6A1; --faint: #64736E;
+    --accent: #46C79E; --accent-soft: rgba(70,199,158,.14); --good: #46C79E;
+    --gold: #D6B25C; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  .page { background: var(--bg); color: var(--text); font-family: var(--ui); min-height: 100vh; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 940px; margin: 0 auto; padding: 36px 22px 72px; }
+  .tablecard { overflow-x: auto; }
+
+  header { position: relative; margin-bottom: 22px; }
+  .glow { position: absolute; top: -50px; left: -40px; width: 300px; height: 180px; background: radial-gradient(closest-side, var(--gold), transparent 70%); opacity: .16; pointer-events: none; filter: blur(6px); }
+  .eyebrow { font-size: 12px; letter-spacing: .22em; text-transform: uppercase; color: var(--gold); font-weight: 600; margin: 0 0 10px; }
+  h1 { font-size: clamp(23px, 3.4vw, 31px); font-weight: 650; letter-spacing: -.02em; margin: 0; line-height: 1.1; }
+  .sub { color: var(--dim); margin: 10px 0 0; max-width: 62ch; font-size: 14.5px; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 13px; box-shadow: var(--shadow); padding: 15px 17px; margin-bottom: 14px; }
+  .card > h3 { font-size: 10.5px; letter-spacing: .09em; text-transform: uppercase; color: var(--accent); margin: 0 0 12px; font-weight: 700; }
+
+  .fld { display: flex; flex-direction: column; gap: 5px; }
+  .fld label { font-size: 11.5px; color: var(--dim); font-weight: 600; }
+  .fld .ib { display: flex; align-items: center; gap: 6px; }
+  .u { font-size: 11.5px; color: var(--faint); }
+  input[type="number"] { font-family: var(--mono); font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; background: var(--surface-2); color: var(--text); border: 1px solid var(--border); border-radius: 7px; padding: 6px 9px; text-align: right; }
+  #lifetime { font-size: 20px; width: 140px; }
+  input[type="number"]:focus-visible, input[type="text"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+
+  .levels { display: flex; flex-direction: column; gap: 8px; }
+  .lvl { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .lvl .tag { font-size: 11px; font-weight: 700; color: var(--accent); background: var(--accent-soft); padding: 3px 10px; border-radius: 999px; min-width: 34px; text-align: center; }
+  .lvl .lb { font-size: 11.5px; color: var(--faint); font-weight: 600; }
+  .lvl input { width: 90px; }
+  .btn { font-family: var(--ui); font-size: 12.5px; font-weight: 600; padding: 7px 12px; border-radius: 8px; cursor: pointer; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); }
+  .btn:hover { border-color: var(--border-strong); }
+  .btn.accent { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+  .btn.accent:hover { background: var(--accent); color: #fff; }
+  .btn.danger:hover { border-color: var(--bad, #C34A3F); color: var(--bad, #C34A3F); }
+  .rm { border: 1px solid var(--border); background: transparent; color: var(--faint); border-radius: 7px; width: 27px; height: 27px; cursor: pointer; font-size: 16px; line-height: 1; }
+  .rm:hover { color: #C34A3F; border-color: #C34A3F; }
+  .addrow { margin-top: 4px; }
+
+  .result { display: flex; flex-wrap: wrap; gap: 22px; align-items: baseline; }
+  .r { display: flex; flex-direction: column; gap: 3px; }
+  .r .rl { font-size: 11px; letter-spacing: .05em; text-transform: uppercase; color: var(--faint); font-weight: 600; }
+  .r .rv { font-family: var(--mono); font-size: clamp(22px, 4vw, 30px); font-weight: 650; font-variant-numeric: tabular-nums; color: var(--accent); }
+  .r .rv small { font-size: 14px; color: var(--dim); font-weight: 500; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { padding: 9px 12px; text-align: right; }
+  th:first-child, td:first-child { text-align: left; }
+  th { font-size: 10px; letter-spacing: .04em; text-transform: uppercase; color: var(--faint); font-weight: 700; border-bottom: 1px solid var(--border-strong); }
+  td { font-family: var(--mono); font-variant-numeric: tabular-nums; border-bottom: 1px solid var(--border); }
+  tr:last-child td { border-bottom: 0; }
+  .tag2 { font-weight: 700; color: var(--accent); background: var(--accent-soft); padding: 2px 9px; border-radius: 999px; font-family: var(--ui); }
+  tr.cur td { background: var(--accent-soft); }
+  tr.cur .tag2 { background: var(--accent); color: #fff; }
+  .now { font-size: 11px; color: var(--accent); font-weight: 700; font-family: var(--ui); }
+
+  .scenarios { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .scenarios .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); font-weight: 700; margin-right: 2px; }
+  .scenarios .sep { width: 1px; align-self: stretch; background: var(--border); margin: 2px 4px; }
+  .scenarios select, .scenarios input[type="text"] { font-family: var(--ui); font-size: 13px; padding: 6px 9px; border-radius: 7px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); }
+  .scenarios input[type="text"] { width: 140px; }
+  .toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 600; box-shadow: var(--shadow); opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 100; }
+  .toast.show { opacity: 1; }
+
+  footer { margin-top: 20px; font-size: 12.5px; color: var(--faint); line-height: 1.6; }
+</style>
+
+<div class="page">
+  <div class="wrap">
+    <header>
+      <div class="glow"></div>
+      <p class="eyebrow">FluoFit · Agent levovi</p>
+      <h1>Koliko kutija → koliki komisn</h1>
+      <p class="sub">Napraviš Agentu levele: svaki level počinje na nekoj <b>granici lifetime prodatih kutija</b> i nosi svoju <b>komisiju %</b>. Uneseš koliko je Agent ukupno prodao → vidiš na kom je levelu, koliki mu je %, i koliko još kutija do sledećeg.</p>
+    </header>
+
+    <div class="card">
+      <h3>Prodato kutija (lifetime) i cena</h3>
+      <div style="display:flex;gap:26px;flex-wrap:wrap;align-items:flex-end">
+        <div class="fld"><label>Prodato kutija (lifetime)</label><div class="ib"><input type="number" id="lifetime" value="450" step="10" min="0"><span class="u">kutija</span></div></div>
+        <div class="fld"><label>Cena po kutiji <span>(osnovica komisije)</span></label><div class="ib"><input type="number" id="price" value="4000" step="100"><span class="u">din</span></div></div>
+        <div class="fld"><label>Naš trošak / kutija <span>(COGS)</span></label><div class="ib"><input type="number" id="cost" value="1000" step="50"><span class="u">din</span></div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="result">
+        <div class="r"><span class="rl">Trenutni level</span><span class="rv" id="r_lvl">—</span></div>
+        <div class="r"><span class="rl">Komisija</span><span class="rv" id="r_comm">—</span></div>
+        <div class="r"><span class="rl">Do sledećeg levela</span><span class="rv" id="r_next">—</span></div>
+        <div class="r"><span class="rl">Agent ukupno zaradio</span><span class="rv" id="r_earn">—</span></div>
+        <div class="r"><span class="rl">FluoFit ukupno profit</span><span class="rv" id="r_fluo">—</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Agent levovi (granica u kutijama + komisija)</h3>
+      <div class="levels" id="levels"></div>
+      <button class="btn accent addrow" id="addLvl">+ Dodaj level</button>
+    </div>
+
+    <div class="card tablecard">
+      <table id="tbl">
+        <thead><tr><th>Level</th><th>Od kutije</th><th>Kutije za level</th><th>Komisija %</th><th>Agent / kutija</th><th>FluoFit / kutija</th><th>Agent zaradio</th><th>FluoFit profit</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="scenarios">
+        <span class="lbl">Scenariji</span>
+        <input type="text" id="scName" placeholder="ime…">
+        <button class="btn accent" id="scSave">Sačuvaj</button>
+        <div class="sep"></div>
+        <select id="scList"><option value="">— sačuvani —</option></select>
+        <button class="btn" id="scLoad">Učitaj</button>
+        <button class="btn danger" id="scDel">Obriši</button>
+      </div>
+    </div>
+
+    <footer>Level se meri na <b>kumulativno prodatim kutijama</b> (lifetime). Throwaway prototip.</footer>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  function fmt(n) { n = Math.round(n); var neg = n < 0; n = Math.abs(n); return (neg ? "−" : "") + n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
+  function pc(n) { return (Math.round(n * 10) / 10).toString().replace(".", ","); }
+  function num(id) { var v = parseFloat(document.getElementById(id).value); return isNaN(v) ? 0 : v; }
+
+  var levels = [{ from: 1, comm: 8 }, { from: 300, comm: 10 }, { from: 800, comm: 12 }];
+
+  var levelsEl = document.getElementById("levels");
+  function renderLevels() {
+    levelsEl.innerHTML = "";
+    levels.forEach(function (L, i) {
+      var row = document.createElement("div");
+      row.className = "lvl";
+      row.innerHTML =
+        '<span class="tag">L' + (i + 1) + '</span>' +
+        '<span class="lb">Od kutije</span><input type="number" data-i="' + i + '" data-k="from" value="' + L.from + '" step="10" min="1">' +
+        '<span class="lb">Komisija</span><input type="number" data-i="' + i + '" data-k="comm" value="' + L.comm + '" step="0.5" style="width:74px"><span class="u">%</span>' +
+        '<button class="rm" data-rm="' + i + '" title="Ukloni" aria-label="Ukloni">×</button>';
+      levelsEl.appendChild(row);
+    });
+    levelsEl.querySelectorAll("input").forEach(function (el) {
+      el.addEventListener("input", function () { levels[+el.dataset.i][el.dataset.k] = parseFloat(el.value) || 0; recompute(); });
+    });
+    levelsEl.querySelectorAll("[data-rm]").forEach(function (b) {
+      b.addEventListener("click", function () { if (levels.length > 1) { levels.splice(+b.dataset.rm, 1); renderLevels(); recompute(); } });
+    });
+  }
+
+  function recompute() {
+    var N = Math.max(0, Math.round(num("lifetime")));
+    var s = levels.map(function (L) { return { from: Math.max(1, Math.round(L.from)), comm: L.comm }; })
+      .sort(function (a, b) { return a.from - b.from; });
+
+    var cur = -1;
+    for (var i = 0; i < s.length; i++) { if (N >= s[i].from) cur = i; }
+
+    // rezultat
+    document.getElementById("r_lvl").innerHTML = cur >= 0 ? "L" + (cur + 1) : "—";
+    document.getElementById("r_comm").innerHTML = cur >= 0 ? pc(s[cur].comm) + ' <small>%</small>' : "—";
+    if (cur + 1 < s.length) {
+      document.getElementById("r_next").innerHTML = fmt(s[cur + 1].from - N) + ' <small>kutija → L' + (cur + 2) + " (" + pc(s[cur + 1].comm) + "%)</small>";
+    } else if (cur >= 0) {
+      document.getElementById("r_next").innerHTML = 'MAX <small>najviši level</small>';
+    } else {
+      document.getElementById("r_next").innerHTML = fmt((s[0] ? s[0].from : 0) - N) + ' <small>do L1</small>';
+    }
+
+    // tabela + pare
+    var price = num("price"), cost = num("cost");
+    function commBox(c) { return price * c / 100; }
+    function fluoBox(c) { return price - cost - commBox(c); }   // FluoFit profit po kutiji
+    var tbody = document.getElementById("tbody");
+    tbody.innerHTML = "";
+    var totEarn = 0, totFluo = 0;
+    s.forEach(function (L, i) {
+      var lo = i === 0 ? 1 : L.from;                 // prvi level pokriva od kutije 1
+      var end = i + 1 < s.length ? s[i + 1].from - 1 : Infinity;
+      var span = end === Infinity ? "od " + fmt(L.from) + " naviše" : fmt(L.from) + "–" + fmt(end);
+      var soldInBand = Math.max(0, Math.min(end, N) - lo + 1);
+      var earned = soldInBand * commBox(L.comm);
+      var fluo = soldInBand * fluoBox(L.comm);
+      var fpb = fluoBox(L.comm);
+      totEarn += earned; totFluo += fluo;
+      var tr = document.createElement("tr");
+      if (i === cur) tr.className = "cur";
+      tr.innerHTML =
+        '<td><span class="tag2">L' + (i + 1) + "</span>" + (i === cur ? ' <span class="now">← sad</span>' : "") + "</td>" +
+        "<td>" + fmt(L.from) + "</td>" +
+        '<td style="color:var(--dim)">' + span + "</td>" +
+        "<td>" + pc(L.comm) + " %</td>" +
+        "<td>" + fmt(commBox(L.comm)) + " din</td>" +
+        '<td' + (fpb < 0 ? ' style="color:#C34A3F"' : "") + ">" + fmt(fpb) + " din</td>" +
+        "<td>" + (earned > 0 ? fmt(earned) + " din" : '<span style="color:var(--faint)">0</span>') + "</td>" +
+        "<td>" + (soldInBand > 0 ? fmt(fluo) + " din" : '<span style="color:var(--faint)">0</span>') + "</td>";
+      tbody.appendChild(tr);
+    });
+    document.getElementById("r_earn").innerHTML = fmt(totEarn) + ' <small>din</small>';
+    document.getElementById("r_fluo").innerHTML = fmt(totFluo) + ' <small>din</small>';
+  }
+
+  document.getElementById("lifetime").addEventListener("input", recompute);
+  document.getElementById("price").addEventListener("input", recompute);
+  document.getElementById("cost").addEventListener("input", recompute);
+  document.getElementById("addLvl").addEventListener("click", function () {
+    var last = levels[levels.length - 1] || { from: 0, comm: 8 };
+    levels.push({ from: (last.from || 0) + 500, comm: last.comm + 2 });
+    renderLevels(); recompute();
+  });
+
+  /* Scenariji */
+  var LS_KEY = "fluofit_agent_levels_v1";
+  var toastEl = document.getElementById("toast"), toastTimer;
+  function toast(m) { toastEl.textContent = m; toastEl.classList.add("show"); clearTimeout(toastTimer); toastTimer = setTimeout(function () { toastEl.classList.remove("show"); }, 2300); }
+  function loadStore() { try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch (e) { return {}; } }
+  function saveStore(o) { try { localStorage.setItem(LS_KEY, JSON.stringify(o)); return true; } catch (e) { toast("Čuvanje nije uspelo"); return false; } }
+  function refreshList(sel) {
+    var store = loadStore(), names = Object.keys(store).sort(), el = document.getElementById("scList");
+    el.innerHTML = "";
+    var o0 = document.createElement("option"); o0.value = ""; o0.textContent = names.length ? "— sačuvani (" + names.length + ") —" : "— nema —";
+    el.appendChild(o0);
+    names.forEach(function (n) { var o = document.createElement("option"); o.value = n; o.textContent = n; el.appendChild(o); });
+    if (sel) el.value = sel;
+  }
+  document.getElementById("scSave").addEventListener("click", function () {
+    var name = document.getElementById("scName").value.trim();
+    if (!name) { toast("Upiši ime"); return; }
+    var store = loadStore(), existed = !!store[name];
+    store[name] = { lifetime: document.getElementById("lifetime").value, price: document.getElementById("price").value, cost: document.getElementById("cost").value, levels: levels.map(function (L) { return { from: L.from, comm: L.comm }; }) };
+    if (saveStore(store)) { refreshList(name); toast(existed ? "Ažuriran: " + name : "Sačuvan: " + name); }
+  });
+  document.getElementById("scLoad").addEventListener("click", function () {
+    var name = document.getElementById("scList").value; if (!name) { toast("Izaberi scenario"); return; }
+    var store = loadStore(); if (!store[name]) { toast("Ne postoji"); return; }
+    var st = store[name];
+    if (st.lifetime !== undefined) document.getElementById("lifetime").value = st.lifetime;
+    if (st.price !== undefined) document.getElementById("price").value = st.price;
+    if (st.cost !== undefined) document.getElementById("cost").value = st.cost;
+    levels = (st.levels && st.levels.length) ? st.levels.map(function (L) { return { from: +L.from || 1, comm: +L.comm || 0 }; }) : [{ from: 1, comm: 8 }];
+    renderLevels(); recompute(); document.getElementById("scName").value = name; toast("Učitan: " + name);
+  });
+  document.getElementById("scDel").addEventListener("click", function () {
+    var name = document.getElementById("scList").value; if (!name) { toast("Izaberi scenario"); return; }
+    if (!window.confirm("Obrisati „" + name + "”?")) return;
+    var store = loadStore(); delete store[name]; saveStore(store); refreshList(); toast("Obrisan: " + name);
+  });
+
+  renderLevels();
+  recompute();
+  refreshList();
+})();
+</script>

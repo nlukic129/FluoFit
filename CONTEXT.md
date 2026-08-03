@@ -61,11 +61,11 @@ Consecutive **days** (calendar days in the Member's **account timezone** — not
 _Avoid_: Chain, run
 
 **XP**:
-Cumulative points earned per daily Sachet scan (times the Streak multiplier). Never decreases. Because a Member can only scan Sachets they have bought, XP is a proxy for lifetime consumption and therefore lifetime spend.
-_Avoid_: Points, score
+Points earned per daily Sachet scan (× the Streak multiplier), counted **toward the next Level** — a Member sees progress *within the current Level segment* ("N to go"), not one ever-growing displayed lifetime total. Still bounded by consumption: a Member can only scan Sachets they have bought, so cumulative XP can never exceed Sachets bought (the fraud floor — [ADR-0006](./docs/adr/0006-aggregate-supply-and-fraud-floor.md)). Never lost.
+_Avoid_: Points, score; "total XP" (the visible mechanic is per-segment progress, not a lifetime number)
 
 **Level**:
-A milestone tier reached on cumulative XP. Never drops. Gates which Perks a Member can access. Frozen (not reset) while a Subscription is lapsed.
+A checkpoint tier reached by accumulating the XP required for the **next** step (a per-segment threshold, not a lifetime total). Never drops — a threshold change applies only to Members still climbing toward it, and **never demotes an existing holder**. Gates which Perks a Member can access. Frozen (not reset) while a Subscription is lapsed. The set of Levels, their thresholds, and their rewards are **Admin-configurable** ([admin-console §8](./docs/product/admin-console.md)); a Level that still has holders is never deleted (only its cosmetics — name, icon — may be edited).
 _Avoid_: Tier, rank (use "Level")
 
 **Perk**:

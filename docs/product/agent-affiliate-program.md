@@ -47,6 +47,7 @@ Commission rate **rises with the count of that Agent's active referred Subscript
   - **Whole-book tier:** current active-sub count picks **one rate for the entire portfolio** — crossing the threshold lifts *all* clients at once. Stronger dopamine (mirrors Member Level mechanic); volatile at the boundary, tamed with a **monthly snapshot + hysteresis** so one lapse doesn't demote.
 - **Demotion on lapse:** yes, an Agent can drop a tier if active subs fall — but smoothed (snapshot/hysteresis), never punitive for a single lost client. Keeps the "earn only while FluoFit earns" spine.
 - Numbers, thresholds, and which of the two structures — all **wait on pricing**.
+- **The rate table + thresholds are Admin-dynamic** ([ADR-0013](../adr/0013-dynamic-config-grandfathering-and-manual-margin.md)): a change goes **live for all Agents at the next monthly snapshot** (the tier already recomputes on active-sub count), so only already-`Accrued` earnings are frozen — not "grandfathered per Agent". No system margin-guardrail; checked in the calculator, not enforced.
 
 ---
 
@@ -59,7 +60,7 @@ Extends [ADR-0004](../adr/0004-referral-economics.md). The old fixed ~20% budget
 - **Commission is the only lever that scales** with tier.
 - Therefore the total **acquisition budget floats** — lowest tier is the cheapest, highest tier the most expensive — and the **worst-case (top) tier must still fit under margin** once COGS is known.
 
-⬜ All %s (discount, each tier, where thresholds sit) wait on COGS → price → budget, in that order.
+⬜ All %s (discount, each tier, where thresholds sit) wait on COGS → price → budget, in that order. **They are Admin-dynamic dials** ([ADR-0013](../adr/0013-dynamic-config-grandfathering-and-manual-margin.md)): a buyer-discount change binds **new buyers only** (existing locked, [ADR-0004](../adr/0004-referral-economics.md)); a tier-rate change is **live at the next snapshot**. Margin safety is human-managed via the calculator, not enforced.
 
 ---
 

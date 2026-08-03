@@ -138,23 +138,33 @@ admin-managed record with no partner-facing platform**. The team enters everythi
 
 ---
 
-## 8. Gamification config ✅
+## 8. Gamification & referral config ✅
 
-The Console holds every tunable parameter. Two invariants config must never violate:
-**"Level never drops"** and **"don't move the goalposts on people already qualified."**
+The Console holds **every tunable dial** — leveling *and* referral numbers. Full propagation
+semantics live in **[ADR-0013](../adr/0013-dynamic-config-grandfathering-and-manual-margin.md)**;
+this is the surface. Two invariants config must never violate: **"Level never drops"** and
+**"don't move the goalposts on the already-qualified."**
 
-| Dial | Editability | Guardrail |
+**How a change propagates depends on the dial** (forward-only, grandfathered-backward):
+
+| Dial | Editability | On change |
 |---|---|---|
 | Wave cap / city-focus | free, runtime | — |
-| Perk ↔ Level mapping | free, runtime | audited |
-| Partner perk config | free, runtime | audited |
-| **Level XP thresholds** | sensitive, rare | a change **never retroactively demotes** anyone already at that Level — it only affects future crossings |
-| **Agent eligibility Level** | sensitive, rare | a change **never strips** eligibility from those already qualified |
-| **XP formula** (base + streak multiplier) | most sensitive | v1: lives in config but **no live admin UI** — too easy to break in production |
+| **Which Levels exist** | add freely | a **Level with holders is never deleted** — only cosmetics (name, icon) edited |
+| **XP threshold to next Level** (checkpoint) | sensitive | applies to Members **still climbing**; **never demotes** anyone past it |
+| **Spend-funded / zero-cost reward** ↔ Level | free, runtime, audited | **grandfathered** — snapshotted at crossing; change reaches only future crossers |
+| **Partner-funded reward** ↔ Level | free, runtime, audited | **live for all holders** — a partner can leave, so it can't be pinned |
+| **Buyer discount %** | sensitive | **new buyers only**; existing buyers stay locked ([ADR-0004](../adr/0004-referral-economics.md)) |
+| **Agent tier rate + thresholds** | sensitive | **live for all at the next monthly snapshot**; only `Accrued` frozen |
+| **Agent eligibility Level** | sensitive, rare | **never strips** eligibility from the already-qualified |
+| **XP formula** (base + streak multiplier) | most sensitive | config-only, **no live UI** — thresholds already give the difficulty knob |
 
-Principle: any config touching **Level/XP is audited and one-directional w.r.t. the
-invariants** — raising a threshold never demotes existing holders; nothing silently rewrites
-a Member's past.
+- **XP is checkpoint-based** — progress toward the next Level, not a displayed lifetime total; the cumulative count still backs the fraud floor ([ADR-0006](../adr/0006-aggregate-supply-and-fraud-floor.md)).
+- **No enforced margin guardrail.** The Console **lets** the Admin save a money-losing ladder; self-financing is protected by **founder discipline + an offline calculator** (margin-per-Member vs reward COGS), not by construction ([ADR-0013](../adr/0013-dynamic-config-grandfathering-and-manual-margin.md), amending [ADR-0002](../adr/0002-two-purse-gamification-funding.md)). The one hard-enforced invariant remains the **fraud floor** — an XP correction still can't silently break `XP ≤ Sachets bought` (§6).
+- **Every dial change is audited** (who/when/what/why), sensitive ones with a mandatory reason.
+
+Principle: config touching **Level/XP is audited and one-directional w.r.t. the invariants** —
+a threshold change never demotes existing holders; nothing silently rewrites a Member's past.
 
 ---
 

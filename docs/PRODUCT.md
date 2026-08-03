@@ -199,6 +199,7 @@ Concepts (see CONTEXT.md): **Streak**, **XP**, **Level**, **Perk**. Funding rule
 ### Open
 - ⬜ Number of Levels, their names, XP thresholds, and which unlock maps to which Level.
 - ⬜ Exact XP formula (per-scan base + streak multiplier).
+- **These are Admin-configurable dials** ([ADR-0013](./adr/0013-dynamic-config-grandfathering-and-manual-margin.md), [admin-console §8](./product/admin-console.md#8-gamification--referral-config-)) — XP is **checkpoint-based** (progress to the next Level, not a lifetime total), a threshold change never demotes, spend-funded rewards are grandfathered-at-crossing while partner-funded ones stay live; the *values* still wait on COGS/pricing.
 
 ---
 

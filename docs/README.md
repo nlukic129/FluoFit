@@ -33,6 +33,7 @@ the human-facing mirror.
 - [ADR-0010](./adr/0010-app-optional-scheduled-subscription.md) — App is optional: base Scheduled Subscription works with no app; app-less web/email entry; commission binds on the paid order
 - [ADR-0011](./adr/0011-refill-mode-decoupled-and-benefit-clock.md) — Refill mode decoupled from the app (Smart / Manual 28–60, chosen at checkout); Smart-pending fallback; delivery-aware scheduling; silence lapses benefits (Benefit clock), never force-ships; retail on-ramp routing; Streak our-fault freeze
 - [ADR-0012](./adr/0012-identity-checkout-and-box-ownership.md) — Passwordless email-first checkout; the first scan transfers the whole Subscription onto the scanner (consolidation → no split, no linking); scanned Box locked; retail Box = Standalone
+- [ADR-0013](./adr/0013-dynamic-config-grandfathering-and-manual-margin.md) — Gamification & referral config is Admin-dynamic; grandfathering differs by dial; checkpoint XP; margin safety human-managed (calculator), not enforced
 
 ## Adding to the docs
 
