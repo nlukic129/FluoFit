@@ -32,7 +32,7 @@ its owning doc — **one fact = one place**, never copied here.
 
 ---
 
-## Phase 1 — App shells + commercial core ⬜
+## Phase 1 — App shells + commercial core ✅
 
 > **Ships:** a person can register passwordless, pick a plan (Smart/Manual + cadence), and an
 > Admin can generate + print Box codes; the first Box "ships" (stubbed). The app is now real.
@@ -42,22 +42,23 @@ its owning doc — **one fact = one place**, never copied here.
 - ✅ `packages/ui` — shared design system (theme + primitives); all three apps consume it, per-app copies removed
 - ✅ **Member:** passwordless checkout flow — email → **mode + cadence picker** (Smart / Manual 28–60) → confirm — via `/api/checkout` server route → `fn_create_subscription`/`fn_place_order`/stub `PaymentPort`/`fn_mark_order_paid` — [ADR-0012](./adr/0012-identity-checkout-and-box-ownership.md), [ADR-0011](./adr/0011-refill-mode-decoupled-and-benefit-clock.md)
 - ✅ **Member:** Box activation screen (`fn_activate_box` — transfer / Standalone / already-bound handling) — [ADR-0012](./adr/0012-identity-checkout-and-box-ownership.md), [ADR-0007](./adr/0007-standalone-gift-retail-box-activation.md)
-- ⬜ **Member:** account / manage-subscription screen
+- ✅ **Member:** account / manage-subscription screen (Email-OTP login + subscription view; lifecycle controls in Phase 3)
 - ✅ **Admin:** Email-OTP login + Box-provisioning screens — batch list, generate (`fn_provision_batch`), void (`fn_void_box`), CSV export — [admin-console §3–4](./product/admin-console.md)
 - ✅ Verified: `pnpm -r typecheck` green across member + admin + all packages (runtime run is on-device — see README quickstart)
 
 **Backend (what powers it)** — commercial-core RPCs done + smoke-tested (7 scenarios), `0012`
 - ✅ Boot local Supabase (`pnpm db:start`) + real generated `packages/db` types (`pnpm db:types`)
-- 🟡 Passwordless auth wiring — admin/partners Email-OTP login done; member magic-link **management** login (post-checkout) still ⬜ — [ARCHITECTURE §1](./ARCHITECTURE.md#1-authentication--identity-)
+- ✅ Passwordless auth wiring — Email-OTP login for member/admin/partners; checkout auto-provisions the account (ADR-0012) — [ARCHITECTURE §1](./ARCHITECTURE.md#1-authentication--identity-)
 - ✅ Subscription create + orders (`fn_create_subscription`, `fn_place_order`, `fn_mark_order_paid`); the app calls stub `PaymentPort` between place & paid, `FulfillmentPort` for shipment — `0012`
 - ✅ **Activation** + whole-Subscription transfer on first scan (scanned Box locked); retail Box → **Standalone** branch (`fn_activate_box`) — [ADR-0012](./adr/0012-identity-checkout-and-box-ownership.md), [ADR-0007](./adr/0007-standalone-gift-retail-box-activation.md)
 - ✅ Box provisioning + void RPCs (`fn_provision_batch`, `fn_void_box`, admin-gated + audited) — [admin-console §4](./product/admin-console.md)
 
 ---
 
-## Phase 2 — Habit loop (highest technical risk) ⬜
+## Phase 2 — Habit loop (highest technical risk) 🟡
 
 > **Ships:** open the app, scan a Sachet, watch the Streak + XP rise — and it works offline.
+> **Backend engine done + smoke-tested (`0013`); scanner UI + client offline queue next.**
 
 **App (what you see)**
 - ⬜ **Member:** home with the **always-live scanner strip** (auto-routes Sachet vs Box QR) — [PRODUCT §2 scanner](./PRODUCT.md#scan-surface--always-live-scanner-)
@@ -65,11 +66,11 @@ its owning doc — **one fact = one place**, never copied here.
 - ⬜ **Prospect home** variants (warm Standalone / cold `ref` / abandoned checkout / cold registrant) — [PRODUCT §1 Prospect home](./PRODUCT.md#prospect-home--conversion-first-entry-surface)
 - ⬜ Camera-permission fallback affordance (never a dead viewfinder)
 
-**Backend (what powers it)**
-- ⬜ Scan-sync engine (idempotency dedup, timestamp clamp, per-(Member,date)) — [ARCHITECTURE §2](./ARCHITECTURE.md#2-offline-session--scanning-)
-- ⬜ XP / Streak / Level derivation (checkpoint XP, weekly grace, our-fault in-transit freeze) — [PRODUCT §3](./PRODUCT.md#3-gamification-)
-- ⬜ Offline queue + optimistic view + reconcile against server-canonical totals
-- ⬜ Fraud floor end-to-end (client mirror + DB trigger); Admin correction as a **loud exception** — [admin-console §6](./product/admin-console.md)
+**Backend (what powers it)** — engine done + smoke-tested (5 scenarios), `0013`
+- ✅ Scan-sync engine `fn_sync_scans` (idempotency dedup, future-timestamp clamp, per-(Member,date), account-tz day boundary) — [ARCHITECTURE §2](./ARCHITECTURE.md#2-offline-session--scanning-)
+- ✅ XP / Streak / Level derivation `fn_recompute_progress` (checkpoint XP, weekly grace) — [PRODUCT §3](./PRODUCT.md#3-gamification-) · 🟡 our-fault in-transit freeze deferred (needs Phase 3 shipment status)
+- 🟡 Offline queue + optimistic view + reconcile — server side done; the on-device queue is ⬜ (client work)
+- ✅ Fraud floor end-to-end (enforced in `fn_sync_scans` under the `0006` trigger; verified) · ⬜ Admin correction as a **loud exception** — [admin-console §6](./product/admin-console.md)
 
 ---
 

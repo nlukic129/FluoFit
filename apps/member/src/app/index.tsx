@@ -22,6 +22,11 @@ export default function HomeScreen() {
         variant="secondary"
         onPress={() => router.push("/activate")}
       />
+      <Button
+        title="Prijava / moj nalog"
+        variant="secondary"
+        onPress={() => router.push("/account")}
+      />
     </Screen>
   );
 }

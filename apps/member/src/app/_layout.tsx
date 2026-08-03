@@ -16,6 +16,7 @@ export default function RootLayout() {
         <Stack.Screen name="index" options={{ title: "FluoFit" }} />
         <Stack.Screen name="checkout" options={{ title: "Pretplata" }} />
         <Stack.Screen name="activate" options={{ title: "Aktiviraj Box" }} />
+        <Stack.Screen name="account" options={{ title: "Moj nalog" }} />
       </Stack>
     </SafeAreaProvider>
   );
