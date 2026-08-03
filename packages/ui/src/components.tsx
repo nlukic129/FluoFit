@@ -1,9 +1,10 @@
-// Minimal shared UI primitives for the member app shell. (A full cross-app design system
-// lives in packages/ui — Phase 1B follow-up; kept local here to keep the shell self-contained.)
+// Shared UI primitives — one source for member, admin, and partners (replaces the per-app
+// copies). Pure React Native so they render on iOS, Android, and web (react-native-web).
 import type { ReactNode } from "react";
 import {
   ActivityIndicator,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -12,19 +13,21 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const COLORS = {
-  bg: "#0B0B0F",
-  text: "#F2F2F5",
-  muted: "#9A9AA5",
-  brand: "#208AEF",
-  card: "#16161D",
-  border: "#26263140",
-};
+import { COLORS } from "./theme";
 
-export function Screen({ children }: { children: ReactNode }) {
+export function Screen({
+  children,
+  scroll = false,
+  maxWidth = 480,
+}: {
+  children: ReactNode;
+  scroll?: boolean;
+  maxWidth?: number;
+}) {
+  const inner = <View style={[styles.container, { maxWidth }]}>{children}</View>;
   return (
     <SafeAreaView style={styles.screen}>
-      <View style={styles.container}>{children}</View>
+      {scroll ? <ScrollView contentContainerStyle={styles.scroll}>{inner}</ScrollView> : inner}
     </SafeAreaView>
   );
 }
@@ -32,9 +35,17 @@ export function Screen({ children }: { children: ReactNode }) {
 export function Heading({ children }: { children: ReactNode }) {
   return <Text style={styles.heading}>{children}</Text>;
 }
-
+export function Subheading({ children }: { children: ReactNode }) {
+  return <Text style={styles.subheading}>{children}</Text>;
+}
 export function Body({ children }: { children: ReactNode }) {
   return <Text style={styles.body}>{children}</Text>;
+}
+export function Card({ children }: { children: ReactNode }) {
+  return <View style={styles.cardBox}>{children}</View>;
+}
+export function Row({ children }: { children: ReactNode }) {
+  return <View style={styles.row}>{children}</View>;
 }
 
 export function Field({ label, ...props }: { label: string } & TextInputProps) {
@@ -60,26 +71,27 @@ export function Button({
 }: {
   title: string;
   onPress: () => void;
-  variant?: "primary" | "secondary";
+  variant?: "primary" | "secondary" | "danger";
   loading?: boolean;
   disabled?: boolean;
 }) {
-  const isSecondary = variant === "secondary";
+  const secondary = variant === "secondary";
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled || loading}
       style={({ pressed }) => [
         styles.button,
-        isSecondary && styles.buttonSecondary,
+        secondary && styles.buttonSecondary,
+        variant === "danger" && styles.buttonDanger,
         (disabled || loading) && styles.buttonDisabled,
         pressed && styles.buttonPressed,
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={isSecondary ? COLORS.text : "#fff"} />
+        <ActivityIndicator color={secondary ? COLORS.text : "#fff"} />
       ) : (
-        <Text style={[styles.buttonText, isSecondary && styles.buttonTextSecondary]}>{title}</Text>
+        <Text style={[styles.buttonText, secondary && styles.buttonTextSecondary]}>{title}</Text>
       )}
     </Pressable>
   );
@@ -103,9 +115,20 @@ export function Choice({
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLORS.bg },
-  container: { flex: 1, padding: 20, gap: 16, maxWidth: 480, width: "100%", alignSelf: "center" },
+  scroll: { padding: 20, alignItems: "center" },
+  container: { flex: 1, padding: 20, gap: 16, width: "100%", alignSelf: "center" },
   heading: { color: COLORS.text, fontSize: 28, fontWeight: "700" },
+  subheading: { color: COLORS.text, fontSize: 18, fontWeight: "600", marginTop: 8 },
   body: { color: COLORS.muted, fontSize: 15, lineHeight: 22 },
+  row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  cardBox: {
+    backgroundColor: COLORS.card,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 12,
+    padding: 16,
+    gap: 10,
+  },
   field: { gap: 6 },
   label: { color: COLORS.text, fontSize: 14, fontWeight: "600" },
   input: {
@@ -117,13 +140,9 @@ const styles = StyleSheet.create({
     padding: 14,
     fontSize: 16,
   },
-  button: {
-    backgroundColor: COLORS.brand,
-    borderRadius: 12,
-    padding: 16,
-    alignItems: "center",
-  },
+  button: { backgroundColor: COLORS.brand, borderRadius: 12, padding: 16, alignItems: "center" },
   buttonSecondary: { backgroundColor: "transparent", borderWidth: 1, borderColor: COLORS.border },
+  buttonDanger: { backgroundColor: COLORS.danger },
   buttonDisabled: { opacity: 0.5 },
   buttonPressed: { opacity: 0.85 },
   buttonText: { color: "#fff", fontSize: 16, fontWeight: "600" },

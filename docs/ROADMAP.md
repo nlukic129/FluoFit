@@ -38,17 +38,17 @@ its owning doc — **one fact = one place**, never copied here.
 > Admin can generate + print Box codes; the first Box "ships" (stubbed). The app is now real.
 
 **App (what you see)**
-- 🟡 Scaffold apps — ✅ `apps/member` (Expo SDK 57, Expo Router, monorepo `.npmrc` + `metro.config.js`); ⬜ `apps/admin`, ⬜ `apps/partners` shell — [ADR-0014 §2](./adr/0014-stack-monorepo-and-ports.md)
-- 🟡 `packages/ui` — member has local UI primitives (`src/components/ui.tsx`); the shared cross-app package is ⬜
+- ✅ Scaffold apps — `apps/member` + `apps/admin` + `apps/partners` shell (Expo SDK 57, Expo Router, monorepo `.npmrc` + `metro.config.js`) — [ADR-0014 §2](./adr/0014-stack-monorepo-and-ports.md)
+- ✅ `packages/ui` — shared design system (theme + primitives); all three apps consume it, per-app copies removed
 - ✅ **Member:** passwordless checkout flow — email → **mode + cadence picker** (Smart / Manual 28–60) → confirm — via `/api/checkout` server route → `fn_create_subscription`/`fn_place_order`/stub `PaymentPort`/`fn_mark_order_paid` — [ADR-0012](./adr/0012-identity-checkout-and-box-ownership.md), [ADR-0011](./adr/0011-refill-mode-decoupled-and-benefit-clock.md)
 - ✅ **Member:** Box activation screen (`fn_activate_box` — transfer / Standalone / already-bound handling) — [ADR-0012](./adr/0012-identity-checkout-and-box-ownership.md), [ADR-0007](./adr/0007-standalone-gift-retail-box-activation.md)
 - ⬜ **Member:** account / manage-subscription screen
-- ⬜ **Admin:** Box-provisioning screens — batch list, generate, export-to-print, void — [admin-console §4](./product/admin-console.md)
-- ✅ Verified: `pnpm -r typecheck` green across member + all packages (runtime run is on-device — see README quickstart)
+- ✅ **Admin:** Email-OTP login + Box-provisioning screens — batch list, generate (`fn_provision_batch`), void (`fn_void_box`), CSV export — [admin-console §3–4](./product/admin-console.md)
+- ✅ Verified: `pnpm -r typecheck` green across member + admin + all packages (runtime run is on-device — see README quickstart)
 
 **Backend (what powers it)** — commercial-core RPCs done + smoke-tested (7 scenarios), `0012`
-- 🟡 Boot local Supabase (`pnpm db:start`) + regenerate real `packages/db` types (`pnpm db:types`) *(moved from Phase 0; needed the moment an app queries the DB)*
-- ⬜ Passwordless auth wiring (email-first) — [ARCHITECTURE §1](./ARCHITECTURE.md#1-authentication--identity-)
+- ✅ Boot local Supabase (`pnpm db:start`) + real generated `packages/db` types (`pnpm db:types`)
+- 🟡 Passwordless auth wiring — admin/partners Email-OTP login done; member magic-link **management** login (post-checkout) still ⬜ — [ARCHITECTURE §1](./ARCHITECTURE.md#1-authentication--identity-)
 - ✅ Subscription create + orders (`fn_create_subscription`, `fn_place_order`, `fn_mark_order_paid`); the app calls stub `PaymentPort` between place & paid, `FulfillmentPort` for shipment — `0012`
 - ✅ **Activation** + whole-Subscription transfer on first scan (scanned Box locked); retail Box → **Standalone** branch (`fn_activate_box`) — [ADR-0012](./adr/0012-identity-checkout-and-box-ownership.md), [ADR-0007](./adr/0007-standalone-gift-retail-box-activation.md)
 - ✅ Box provisioning + void RPCs (`fn_provision_batch`, `fn_void_box`, admin-gated + audited) — [admin-console §4](./product/admin-console.md)

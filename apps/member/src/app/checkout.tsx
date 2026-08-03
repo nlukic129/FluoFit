@@ -2,7 +2,7 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Platform, ScrollView, View } from "react-native";
 
-import { Body, Button, Choice, Field, Heading, Screen } from "@/components/ui";
+import { Body, Button, Choice, Field, Heading, Screen } from "@fluofit/ui";
 import type { RefillMode } from "@fluofit/core";
 
 // Passwordless email-first checkout (ADR-0012). The account is auto-provisioned from the

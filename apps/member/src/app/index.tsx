@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import { View } from "react-native";
 
-import { Body, Button, Heading, Screen } from "@/components/ui";
+import { Body, Button, Heading, Screen } from "@fluofit/ui";
 
 // Prospect home (conversion-first). A cold Prospect sees the buy CTA + an "I have a Box"
 // activation path. The warm Standalone / scanner experience lands in Phase 2 (PRODUCT §1).

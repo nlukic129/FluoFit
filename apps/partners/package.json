@@ -1,5 +1,5 @@
 {
-  "name": "member",
+  "name": "partners",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "dependencies": {
@@ -31,7 +31,6 @@
     "@fluofit/ui": "workspace:*"
   },
   "devDependencies": {
-    "@fluofit/core": "workspace:*",
     "@types/react": "~19.2.2",
     "typescript": "~6.0.3"
   },

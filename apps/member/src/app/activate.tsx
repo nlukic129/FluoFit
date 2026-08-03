@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { View } from "react-native";
 
-import { Body, Button, Field, Heading, Screen } from "@/components/ui";
+import { Body, Button, Field, Heading, Screen } from "@fluofit/ui";
 import { supabase } from "@/lib/supabase";
 
 // Box Activation via the human-readable fallback code (the QR scanner path lands in Phase 2).
