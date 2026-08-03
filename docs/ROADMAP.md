@@ -22,7 +22,7 @@ Stack + design language: **Next.js + Tailwind + shadcn-style, light-mode, Englis
 `apps/admin/design-system/`). Supersedes the admin items previously scattered across Phases 1/4/5.
 
 - ✅ **M0 — Foundation:** Next.js (App Router) + Tailwind v4 + shadcn-style primitives + light design tokens (`ui-ux-pro-max`) + Fira Sans/Code; sidebar shell + Email-OTP auth guard; all module routes stubbed. Verified `next build` + `tsc`.
-- ⬜ **M1 — Provisioning + Overview:** live KPIs; Batches/Boxes DataTable, Generate dialog, Void, CSV export (wired to `fn_provision_batch`/`fn_void_box`).
+- ✅ **M1 — Provisioning + Overview:** live KPI counts; Batches + Boxes tables (status filter), Generate dialog, audited Void dialog, CSV export — wired to `fn_provision_batch`/`fn_void_box`. Verified `next build` + `tsc`.
 - ⬜ **M2 — Members + Support & Overrides:** member 360; ticket queue + override toolkit (`fn_admin_manual_activate`, `fn_admin_unbind_rebind`, `fn_admin_adjust_progress` [loud-exception], `fn_admin_release_commission`, `fn_admin_fix_attribution`).
 - ⬜ **M3 — Gamification config:** dials over `fn_apply_config`; Levels CRUD (`fn_upsert_level` — never delete held), Perk↔Level, eligibility, tier rates, buyer discount — grandfathering per [ADR-0013](./adr/0013-dynamic-config-grandfathering-and-manual-margin.md).
 - ⬜ **M4 — Agents/Intake + Affiliates:** waves (`fn_open_wave`/`fn_decide_application`/`fn_close_wave`/`fn_block_member`); Affiliate add/offboard (`fn_add_affiliate`/`fn_offboard_referrer`).
