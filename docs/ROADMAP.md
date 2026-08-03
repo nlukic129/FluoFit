@@ -38,11 +38,13 @@ its owning doc — **one fact = one place**, never copied here.
 > Admin can generate + print Box codes; the first Box "ships" (stubbed). The app is now real.
 
 **App (what you see)**
-- ⬜ Scaffold `apps/member` (Expo Router: navigation, tabs, home shell), `apps/admin` (Expo web), `apps/partners` shell — [ADR-0014 §2](./adr/0014-stack-monorepo-and-ports.md)
-- ⬜ `packages/ui` design-system foundation (theme, core components) shared by all three
-- ⬜ **Member:** passwordless checkout flow — email → plan → **mode + cadence picker** (Smart / Manual 28–60) → confirm — [ADR-0012](./adr/0012-identity-checkout-and-box-ownership.md), [ADR-0011](./adr/0011-refill-mode-decoupled-and-benefit-clock.md)
-- ⬜ **Member:** minimal account / manage-subscription screen (web + app)
+- 🟡 Scaffold apps — ✅ `apps/member` (Expo SDK 57, Expo Router, monorepo `.npmrc` + `metro.config.js`); ⬜ `apps/admin`, ⬜ `apps/partners` shell — [ADR-0014 §2](./adr/0014-stack-monorepo-and-ports.md)
+- 🟡 `packages/ui` — member has local UI primitives (`src/components/ui.tsx`); the shared cross-app package is ⬜
+- ✅ **Member:** passwordless checkout flow — email → **mode + cadence picker** (Smart / Manual 28–60) → confirm — via `/api/checkout` server route → `fn_create_subscription`/`fn_place_order`/stub `PaymentPort`/`fn_mark_order_paid` — [ADR-0012](./adr/0012-identity-checkout-and-box-ownership.md), [ADR-0011](./adr/0011-refill-mode-decoupled-and-benefit-clock.md)
+- ✅ **Member:** Box activation screen (`fn_activate_box` — transfer / Standalone / already-bound handling) — [ADR-0012](./adr/0012-identity-checkout-and-box-ownership.md), [ADR-0007](./adr/0007-standalone-gift-retail-box-activation.md)
+- ⬜ **Member:** account / manage-subscription screen
 - ⬜ **Admin:** Box-provisioning screens — batch list, generate, export-to-print, void — [admin-console §4](./product/admin-console.md)
+- ✅ Verified: `pnpm -r typecheck` green across member + all packages (runtime run is on-device — see README quickstart)
 
 **Backend (what powers it)** — commercial-core RPCs done + smoke-tested (7 scenarios), `0012`
 - 🟡 Boot local Supabase (`pnpm db:start`) + regenerate real `packages/db` types (`pnpm db:types`) *(moved from Phase 0; needed the moment an app queries the DB)*
