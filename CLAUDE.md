@@ -7,14 +7,14 @@ files reference each other).
 FluoFit in one line: a single-serving supplement brand with an app, subscription,
 affiliate program, and loyalty ecosystem. Full definition → [`docs/PRODUCT.md`](./docs/PRODUCT.md).
 
-## ⚠️ Stage gate — read before writing any app code
+## ⚠️ Stage gate — the `fluofit-build` skill now exists
 
-FluoFit is in **product-discovery stage**: docs only, **no app code yet**. The moment work
-turns to writing application code (schema, screens, functions), **STOP and remind the
-author first**: *"Before code — let's create the FluoFit project skill that encodes the
-invariants, per docs/SKILLS-GUIDE.md."* Do not start coding until that skill exists (or
-the author explicitly declines). Why: it makes every later session enforce the invariants
-automatically. Details + checklist → [`docs/SKILLS-GUIDE.md`](./docs/SKILLS-GUIDE.md#before-you-write-code--build-the-fluofit-project-skill).
+The project skill has been created at `.claude/skills/fluofit-build/SKILL.md` — the gate is
+**satisfied**. Any session writing or reviewing **app code** (schema, migrations, RLS, screens,
+Edge Functions) must **load `fluofit-build` first** so the five invariants are enforced
+automatically. It points to the owning docs; it never restates their detail. Build shape (stack,
+monorepo, ports, sequencing) → [ADR-0014](./docs/adr/0014-stack-monorepo-and-ports.md). Skill
+rationale → [`docs/SKILLS-GUIDE.md`](./docs/SKILLS-GUIDE.md#before-you-write-code--build-the-fluofit-project-skill).
 
 ## Where things live
 
@@ -22,7 +22,8 @@ automatically. Details + checklist → [`docs/SKILLS-GUIDE.md`](./docs/SKILLS-GU
 |---|---|
 | Terms / glossary (what we *call* things) | [`CONTEXT.md`](./CONTEXT.md) |
 | Product & features (the idea, UX) | [`docs/PRODUCT.md`](./docs/PRODUCT.md) |
-| Technology (stack, schema, RLS, offline sync) | [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) |
+| Technology (stack, engines, ports, offline sync) | [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) |
+| Concrete DB schema + RLS policies | [`docs/architecture/data-model.md`](./docs/architecture/data-model.md) |
 | Hard-to-reverse decisions + the why | [`docs/adr/`](./docs/adr/) |
 | Throwaway UI experiments | [`docs/prototypes/`](./docs/prototypes/) |
 | Full docs index | [`docs/README.md`](./docs/README.md) |

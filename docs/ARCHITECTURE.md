@@ -12,9 +12,48 @@ stack, data model, and system-level mechanics only.
 
 ## Stack
 
-- **Mobile:** Expo (React Native) — `expo-notifications` (local, offline-capable),
-  `expo-secure-store` (session tokens).
-- **Backend:** Supabase — Postgres, Auth (single project), Row-Level Security.
+- **Mobile + app-less Member web:** **one** Expo Router app, three targets (iOS/Android/web) —
+  `expo-notifications` (local, offline-capable), `expo-secure-store` (session tokens). The
+  passwordless checkout + subscription-management web flows are the **web target of the same
+  app**, not a separate codebase ([ADR-0014](./adr/0014-stack-monorepo-and-ports.md)).
+- **Agent/Affiliate + Admin Console:** separate Expo-Router **web** apps in the monorepo (one UI
+  stack for v1; Next.js is the documented escape hatch if data-dense dashboards outgrow RN Web).
+- **Backend:** Supabase — Postgres, Auth (single project), Row-Level Security, Edge Functions
+  (Deno), **pg_cron** (benefit clock / refill / commission clearing / dunning), Realtime, Storage.
+- **Monorepo:** pnpm workspaces + Turborepo; invariants live in `packages/db` (DB constraints +
+  RLS) and `packages/core` (domain + ports), never in a screen. Layout + rationale →
+  [ADR-0014](./adr/0014-stack-monorepo-and-ports.md).
+
+---
+
+## Data model & RLS ✅ (design drafted)
+
+The full Postgres schema + RLS policies live in their own doc:
+**[`architecture/data-model.md`](./architecture/data-model.md)** — the scan ledger → derived
+`member_progress`, the fraud-floor trigger, subscription/orders/shipments, referral +
+commission + consent tables, versioned config, and the `outbox` adapter seam. `ARCHITECTURE.md`
+is the index for that domain.
+
+---
+
+## System engines & ports ✅
+
+Where the invariants execute (all server-side, in Edge Functions + `pg_cron`):
+
+| Engine | Runs in | Enforces |
+|---|---|---|
+| **scan-sync** | Edge Function | idempotency dedup; XP from `scan_date_local`; timestamp clamp; recompute `member_progress` |
+| **fraud floor** | DB trigger | earning scans ≤ 28 × activated Boxes ([ADR-0006](./adr/0006-aggregate-supply-and-fraud-floor.md)) |
+| **refill-engine** | Edge Function + cron | Smart (signal ≤7 / "Order now", never calendar) vs Manual (28–60d, doorstep-aware) ([ADR-0011](./adr/0011-refill-mode-decoupled-and-benefit-clock.md)) |
+| **benefit-clock** | cron | ≤60d from last **paid order**; lapse (never force-ship) |
+| **commission-engine** | Edge Function + cron | `Accrued→Cleared(30d)→Payable→Paid`; clawback; first-payout gate |
+| **config-apply** | Edge Function | per-dial grandfathering ([ADR-0013](./adr/0013-dynamic-config-grandfathering-and-manual-margin.md)) |
+
+**Ports / adapters** ([ADR-0014](./adr/0014-stack-monorepo-and-ports.md)): parked domains are
+TypeScript interfaces in `packages/core` — `PaymentPort`, `FulfillmentPort`, `PayoutPort`,
+`NotifyPort`. v1 ships **stubs that simulate the real async state machines** (via the `outbox`
+table + an `adapter-webhook-sim` Edge Function), so benefit clock / refill / Streak-freeze
+behave as in production. Unparking a domain is a **port swap**, not a rewrite.
 
 ---
 
@@ -111,7 +150,8 @@ server play different roles — they are not two competing copies:
 
 ## Open technical questions
 
-- ⬜ Data model / schema (tables for Box, Sachet-scan events, Subscription, XP ledger,
-  Affiliate commission lifecycle) — not yet designed.
+- ✅ Data model / schema — **drafted** in [`architecture/data-model.md`](./architecture/data-model.md)
+  (Box, scan ledger, Subscription/orders, XP derivation, commission lifecycle, config, RLS).
+  Remaining: turn the draft into `packages/db` migrations (Phase 0).
 - ⬜ Cross-border payout/tax mechanics if FluoFit (Dubai) pays Affiliates (Serbia) — see
   [PRODUCT §4 — Affiliate](./PRODUCT.md).

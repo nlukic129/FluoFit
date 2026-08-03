@@ -12,7 +12,8 @@ the human-facing mirror.
 |---|---|---|
 | [`../CONTEXT.md`](../CONTEXT.md) | **Language / glossary** | What do we *call* things? (Box, Sachet, Member, XP…) |
 | [`PRODUCT.md`](./PRODUCT.md) | **Product & features (the idea)** | What are we building, and how should it behave? |
-| [`ARCHITECTURE.md`](./ARCHITECTURE.md) | **Technology (the how)** | Stack, auth, RLS, offline sync, data model. |
+| [`ARCHITECTURE.md`](./ARCHITECTURE.md) | **Technology (the how)** | Stack, auth, RLS, offline sync, engines/ports. Indexes [`architecture/`](./architecture/). |
+| [`architecture/data-model.md`](./architecture/data-model.md) | **Schema & RLS** | The concrete Postgres tables + Row-Level Security policies. |
 | [`adr/`](./adr/) | **Decisions (the why)** | Why did we choose X — one hard-to-reverse decision per file. |
 | [`prototypes/`](./prototypes/) | **Throwaway UI** | Quick experiments, not production code. |
 | [`../CLAUDE.md`](../CLAUDE.md) | **How we work** | Conventions, invariants, and this documentation map. |
@@ -34,6 +35,7 @@ the human-facing mirror.
 - [ADR-0011](./adr/0011-refill-mode-decoupled-and-benefit-clock.md) — Refill mode decoupled from the app (Smart / Manual 28–60, chosen at checkout); Smart-pending fallback; delivery-aware scheduling; silence lapses benefits (Benefit clock), never force-ships; retail on-ramp routing; Streak our-fault freeze
 - [ADR-0012](./adr/0012-identity-checkout-and-box-ownership.md) — Passwordless email-first checkout; the first scan transfers the whole Subscription onto the scanner (consolidation → no split, no linking); scanned Box locked; retail Box = Standalone
 - [ADR-0013](./adr/0013-dynamic-config-grandfathering-and-manual-margin.md) — Gamification & referral config is Admin-dynamic; grandfathering differs by dial; checkpoint XP; margin safety human-managed (calculator), not enforced
+- [ADR-0014](./adr/0014-stack-monorepo-and-ports.md) — Stack & monorepo shape (Expo universal Member app + Expo-web partners/admin, Supabase); invariants in shared packages; parked integrations behind adapter ports
 
 ## Adding to the docs
 
