@@ -14,7 +14,7 @@ its owning doc — **one fact = one place**, never copied here.
 
 ---
 
-## Admin Console — completion track (active priority) 🟡
+## Admin Console — completion track ✅ (complete)
 
 A dedicated track to finish the **whole Admin Console** ([admin-console.md](./product/admin-console.md)).
 Stack + design language: **Next.js + Tailwind + shadcn-style, light-mode, English, desktop-first**
@@ -24,10 +24,10 @@ Stack + design language: **Next.js + Tailwind + shadcn-style, light-mode, Englis
 - ✅ **M0 — Foundation:** Next.js (App Router) + Tailwind v4 + shadcn-style primitives + light design tokens (`ui-ux-pro-max`) + Fira Sans/Code; sidebar shell + Email-OTP auth guard; all module routes stubbed. Verified `next build` + `tsc`.
 - ✅ **M1 — Provisioning + Overview:** live KPI counts; Batches + Boxes tables (status filter), Generate dialog, audited Void dialog, CSV export — wired to `fn_provision_batch`/`fn_void_box`. Verified `next build` + `tsc`.
 - ✅ **M2 — Members + Support & Overrides:** member search + 360 (`fn_admin_search_members`/`fn_admin_member_360`); XP/Streak correction with loud-exception guard; ticket queue + resolve; override toolkit (`fn_admin_manual_activate`, `fn_admin_unbind_rebind`, `fn_admin_fix_attribution`, `fn_admin_release_commission`/`fn_admin_clawback_commission`). Backend smoke-tested (9 scenarios); UI `next build`+`tsc` green.
-- ✅ **M3 — Gamification config:** Levels CRUD (`fn_upsert_level`/`fn_delete_level` — refuses held) + **never-demote** hardening in `fn_recompute_progress`; config dials (eligibility, tier rates, buyer discount) over `fn_apply_config`; Perk↔Level RPCs (`fn_upsert_perk`/`fn_map_perk_level`/`fn_unmap`) ready + tested (mapping UI a thin follow-up). Backend smoke-tested (6 scenarios); UI `next build`+`tsc` green — grandfathering per [ADR-0013](./adr/0013-dynamic-config-grandfathering-and-manual-margin.md).
+- ✅ **M3 — Gamification config:** Levels CRUD (`fn_upsert_level`/`fn_delete_level` — refuses held) + **never-demote** hardening in `fn_recompute_progress`; config dials (eligibility, tier rates, buyer discount) over `fn_apply_config`; Perks CRUD + Perk↔Level mapping UI (`fn_upsert_perk`/`fn_map_perk_level`/`fn_unmap_perk_level`). Backend smoke-tested (6 scenarios); UI `next build`+`tsc` green — grandfathering per [ADR-0013](./adr/0013-dynamic-config-grandfathering-and-manual-margin.md).
 - ✅ **M4 — Agents/Intake + Affiliates:** wave lifecycle (`fn_open_wave`/`fn_close_wave`), applicant curation view + approve→grant Agent+ref / waitlist (`fn_decide_application`), `fn_block_member`; Affiliate add-by-email/offboard (`fn_add_affiliate`/`fn_offboard_referrer`) + `fn_admin_list_referrers`. Backend smoke-tested (9 scenarios); UI `next build`+`tsc` green.
 - ✅ **M5 — Payouts + Fraud:** payout statement per recipient (`fn_generate_payout_statement`) + mark-paid on agency confirmation (`fn_mark_referrer_paid`); fraud review list (`fn_admin_list_commissions`) with release/clawback (`fn_admin_release_commission`/`fn_admin_clawback_commission`). Backend smoke-tested (5 scenarios); UI `next build`+`tsc` green.
-- ⬜ **M6 — Partners + Audit Log + final UX pass:** partner CRUD + perk/tier map; audit viewer; `ui-ux-pro-max` checklist (contrast, focus, empty/loading/error, keyboard).
+- ✅ **M6 — Partners + Audit Log + final UX pass:** partner CRUD (`fn_upsert_partner`) + perk/tier mapping (`fn_map_partner_perk`); audit viewer (`fn_admin_list_audit`) with filter; UX pass verified (Lucide icons, focus rings, hover/empty/loading states, WCAG-AA light contrast, cursor-pointer). Backend smoke-tested (4 scenarios); UX clean `next build` (14 routes) + `tsc` green.
 
 Every mutating RPC = `SECURITY DEFINER` + `is_admin()` + `fn_log_audit` (reason on sensitive). Each RPC Postgres-tested; each UI delivered typecheck/`next build`-green.
 

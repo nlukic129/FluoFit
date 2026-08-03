@@ -4,11 +4,13 @@ import { Plus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 import { PageHeader } from "@/components/page-shell";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Modal } from "@/components/ui/modal";
+import { Select } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/lib/supabase/client";
 
@@ -25,6 +27,7 @@ export default function GamificationPage() {
       {error && <p className="mb-4 text-sm text-destructive">⚠️ {error}</p>}
       <div className="space-y-6">
         <LevelsSection onError={setError} />
+        <PerksSection onError={setError} />
         <DialsSection onError={setError} />
       </div>
     </>
@@ -261,6 +264,231 @@ function DialsSection({ onError }: { onError: (m: string) => void }) {
         ))}
       </CardContent>
     </Card>
+  );
+}
+
+type Perk = { id: string; name: string; funding: string; cost_hint: number | null };
+type Mapping = { level_id: string; perk_id: string };
+const fundingTone = (f: string) => (f === "partner" ? "info" : f === "spend" ? "warning" : "neutral");
+
+function PerksSection({ onError }: { onError: (m: string) => void }) {
+  const [perks, setPerks] = useState<Perk[]>([]);
+  const [levels, setLevels] = useState<Level[]>([]);
+  const [mappings, setMappings] = useState<Mapping[]>([]);
+  const [editing, setEditing] = useState<Perk | "new" | null>(null);
+  const [mapPerk, setMapPerk] = useState("");
+  const [mapLevel, setMapLevel] = useState("");
+  const [mapReason, setMapReason] = useState("");
+
+  const load = useCallback(async () => {
+    const [pk, lv, mp] = await Promise.all([
+      supabase.from("perks").select("id,name,funding,cost_hint").order("name"),
+      supabase.from("levels").select("id,ordinal,threshold_xp,name,icon").order("ordinal"),
+      supabase.from("level_perks").select("level_id,perk_id"),
+    ]);
+    if (pk.error) onError(pk.error.message);
+    else setPerks((pk.data as Perk[]) ?? []);
+    if (lv.data) setLevels(lv.data as Level[]);
+    if (mp.data) setMappings(mp.data as Mapping[]);
+  }, [onError]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  async function map() {
+    const { error } = await supabase.rpc("fn_map_perk_level", {
+      p_level: mapLevel,
+      p_perk: mapPerk,
+      p_reason: mapReason,
+    });
+    if (error) onError(error.message);
+    else {
+      setMapReason("");
+      await load();
+    }
+  }
+
+  async function unmap(m: Mapping) {
+    const reason = window.prompt("Unmap this perk? Reason:");
+    if (!reason) return;
+    const { error } = await supabase.rpc("fn_unmap_perk_level", {
+      p_level: m.level_id,
+      p_perk: m.perk_id,
+      p_reason: reason,
+    });
+    if (error) onError(error.message);
+    else await load();
+  }
+
+  const perkName = (id: string) => perks.find((p) => p.id === id)?.name ?? id;
+  const levelName = (id: string) => levels.find((l) => l.id === id)?.name ?? id;
+
+  return (
+    <Card>
+      <CardHeader className="flex-row items-center justify-between space-y-0">
+        <div>
+          <CardTitle>Perks</CardTitle>
+          <CardDescription>Partner-funded run live; spend/zero are grandfathered at crossing.</CardDescription>
+        </div>
+        <Button size="sm" onClick={() => setEditing("new")}>
+          <Plus /> Add perk
+        </Button>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Funding</TableHead>
+              <TableHead>Cost hint</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {perks.length === 0 ? (
+              <TableRow>
+                <TableCell className="text-muted-foreground" colSpan={4}>
+                  No perks yet.
+                </TableCell>
+              </TableRow>
+            ) : (
+              perks.map((p) => (
+                <TableRow key={p.id}>
+                  <TableCell className="font-medium">{p.name}</TableCell>
+                  <TableCell>
+                    <Badge tone={fundingTone(p.funding)}>{p.funding}</Badge>
+                  </TableCell>
+                  <TableCell className="tabular">{p.cost_hint != null ? `€${p.cost_hint}` : "—"}</TableCell>
+                  <TableCell className="text-right">
+                    <Button size="sm" variant="outline" onClick={() => setEditing(p)}>
+                      Edit
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Map perk → Level</p>
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_1fr_1fr_auto]">
+            <Select value={mapPerk} onChange={(e) => setMapPerk(e.target.value)}>
+              <option value="">Perk…</option>
+              {perks.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </Select>
+            <Select value={mapLevel} onChange={(e) => setMapLevel(e.target.value)}>
+              <option value="">Level…</option>
+              {levels.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.name}
+                </option>
+              ))}
+            </Select>
+            <Input placeholder="Reason" value={mapReason} onChange={(e) => setMapReason(e.target.value)} />
+            <Button disabled={!mapPerk || !mapLevel || !mapReason.trim()} onClick={map}>
+              Map
+            </Button>
+          </div>
+
+          {mappings.length > 0 && (
+            <div className="flex flex-wrap gap-2 pt-1">
+              {mappings.map((m) => (
+                <button
+                  key={`${m.level_id}-${m.perk_id}`}
+                  onClick={() => unmap(m)}
+                  className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:text-destructive"
+                  title="Unmap"
+                >
+                  {perkName(m.perk_id)} → {levelName(m.level_id)} ✕
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </CardContent>
+      {editing && (
+        <PerkModal
+          perk={editing === "new" ? null : editing}
+          onClose={() => setEditing(null)}
+          onSaved={() => {
+            setEditing(null);
+            void load();
+          }}
+          onError={onError}
+        />
+      )}
+    </Card>
+  );
+}
+
+function PerkModal({
+  perk,
+  onClose,
+  onSaved,
+  onError,
+}: {
+  perk: Perk | null;
+  onClose: () => void;
+  onSaved: () => void;
+  onError: (m: string) => void;
+}) {
+  const [name, setName] = useState(perk?.name ?? "");
+  const [funding, setFunding] = useState(perk?.funding ?? "spend");
+  const [cost, setCost] = useState(perk?.cost_hint != null ? String(perk.cost_hint) : "");
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function save() {
+    setBusy(true);
+    const { error } = await supabase.rpc("fn_upsert_perk", {
+      p_id: perk?.id ?? null,
+      p_name: name,
+      p_funding: funding,
+      p_cost_hint: cost === "" ? null : Number(cost),
+      p_reason: reason,
+    });
+    setBusy(false);
+    if (error) onError(error.message);
+    else onSaved();
+  }
+
+  return (
+    <Modal open onClose={onClose} title={perk ? "Edit perk" : "Add perk"}>
+      <div className="space-y-1.5">
+        <Label>Name</Label>
+        <Input value={name} onChange={(e) => setName(e.target.value)} />
+      </div>
+      <div className="space-y-1.5">
+        <Label>Funding</Label>
+        <Select value={funding} onChange={(e) => setFunding(e.target.value)}>
+          <option value="partner">partner</option>
+          <option value="spend">spend</option>
+          <option value="zero">zero</option>
+        </Select>
+      </div>
+      <div className="space-y-1.5">
+        <Label>Cost hint (€, optional)</Label>
+        <Input type="number" value={cost} onChange={(e) => setCost(e.target.value)} />
+      </div>
+      <div className="space-y-1.5">
+        <Label>Reason</Label>
+        <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="required" />
+      </div>
+      <div className="flex justify-end gap-2 pt-1">
+        <Button variant="outline" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button disabled={!name || !reason.trim() || busy} onClick={save}>
+          {busy ? "Saving…" : "Save"}
+        </Button>
+      </div>
+    </Modal>
   );
 }
 
