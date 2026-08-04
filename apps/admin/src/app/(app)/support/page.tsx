@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
 
+import { Pager } from "@/components/pager";
 import { PageHeader } from "@/components/page-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,7 +26,10 @@ type Ticket = {
   member_email: string | null;
   member_name: string | null;
   sub_status: string | null;
+  total_count: number;
 };
+
+const PAGE_SIZE = 15;
 
 type TicketDetail = {
   id: string;
@@ -72,6 +76,8 @@ function SupportInner() {
   const [status, setStatus] = useState("open");
   const [q, setQ] = useState("");
   const [dq, setDq] = useState("");
+  const [page, setPage] = useState(0);
+  const [total, setTotal] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
 
@@ -80,11 +86,25 @@ function SupportInner() {
     return () => clearTimeout(t);
   }, [q]);
 
-  const load = useCallback(async () => {
-    const { data, error } = await supabase.rpc("fn_admin_list_tickets", { p_status: status || null, p_query: dq || null });
-    if (error) setError(error.message);
-    else setTickets((data as Ticket[]) ?? []);
+  // Reset to first page whenever the filter changes.
+  useEffect(() => {
+    setPage(0);
   }, [status, dq]);
+
+  const load = useCallback(async () => {
+    const { data, error } = await supabase.rpc("fn_admin_list_tickets", {
+      p_status: status || null,
+      p_query: dq || null,
+      p_limit: PAGE_SIZE,
+      p_offset: page * PAGE_SIZE,
+    });
+    if (error) setError(error.message);
+    else {
+      const r = (data as Ticket[]) ?? [];
+      setTickets(r);
+      setTotal(r.length ? Number(r[0]!.total_count) : 0);
+    }
+  }, [status, dq, page]);
 
   useEffect(() => {
     void load();
@@ -94,8 +114,6 @@ function SupportInner() {
   useEffect(() => {
     if (focus) setOpenId(focus);
   }, [focus]);
-
-  const openCount = tickets.filter((t) => t.status === "open").length;
 
   return (
     <>
@@ -111,7 +129,7 @@ function SupportInner() {
           ))}
         </div>
         <Input className="max-w-xs" placeholder="Search subject or member…" value={q} onChange={(e) => setQ(e.target.value)} />
-        {status === "open" && <span className="ml-auto text-sm text-muted-foreground">{openCount} open</span>}
+        {status === "open" && <span className="ml-auto text-sm text-muted-foreground">{total} open</span>}
       </div>
 
       <Table>
@@ -153,6 +171,7 @@ function SupportInner() {
           )}
         </TableBody>
       </Table>
+      <Pager page={page} pageSize={PAGE_SIZE} total={total} onPage={setPage} unit="tickets" />
 
       {openId && <TicketDrawer ticketId={openId} onClose={() => setOpenId(null)} onChanged={load} />}
     </>

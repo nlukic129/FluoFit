@@ -3,6 +3,7 @@
 import { Plus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
+import { Pager } from "@/components/pager";
 import { PageHeader } from "@/components/page-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,18 +20,31 @@ type Referrer = {
   ref_code: string;
   fixed_pct: number | null;
   active_subs: number;
+  total_count: number;
 };
+
+const PAGE_SIZE = 20;
 
 export default function AffiliatesPage() {
   const [rows, setRows] = useState<Referrer[]>([]);
+  const [page, setPage] = useState(0);
+  const [total, setTotal] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
 
   const load = useCallback(async () => {
-    const { data, error } = await supabase.rpc("fn_admin_list_referrers", { p_type: "affiliate" });
+    const { data, error } = await supabase.rpc("fn_admin_list_referrers", {
+      p_type: "affiliate",
+      p_limit: PAGE_SIZE,
+      p_offset: page * PAGE_SIZE,
+    });
     if (error) setError(error.message);
-    else setRows((data as Referrer[]) ?? []);
-  }, []);
+    else {
+      const r = (data as Referrer[]) ?? [];
+      setRows(r);
+      setTotal(r.length ? Number(r[0]!.total_count) : 0);
+    }
+  }, [page]);
 
   useEffect(() => {
     void load();
@@ -97,6 +111,7 @@ export default function AffiliatesPage() {
           )}
         </TableBody>
       </Table>
+      <Pager page={page} pageSize={PAGE_SIZE} total={total} onPage={setPage} unit="affiliates" />
 
       {adding && <AddAffiliateModal onClose={() => setAdding(false)} onSaved={() => { setAdding(false); void load(); }} onError={setError} />}
     </>

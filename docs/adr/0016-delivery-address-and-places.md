@@ -4,6 +4,12 @@
 > the intake model in [agent-affiliate-program §1](../product/agent-affiliate-program.md) (city-targeted
 > waves) implicitly assumed. Fulfilment itself stays parked ([PRODUCT "Parked"](../PRODUCT.md#parked-considered-deliberately-deferred)).
 
+> **Status (2026-08): decided, NOT yet implemented.** City inputs are still free-text (intake-wave
+> `city_focus`, add-affiliate, seed) — a `belgrade` vs `beograd` typo already broke the city gate.
+> Replacing every city field with a Places-backed dropdown is a **near-term priority**, and *what a
+> "city"/region is* (Places locality vs internal region catchments) is an open design question.
+> Tracked in [OPEN-FLOWS](../OPEN-FLOWS.md#needs-discussion-raised-not-yet-resolved).
+
 ## Context
 
 The data model had **no delivery address or city**, yet two live features need the city now:
