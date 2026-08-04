@@ -67,7 +67,12 @@ function PrintLabels() {
               {boxes.length} labels. Sizes are in millimetres — print at 100% scale (no “fit to page”).
             </p>
           </div>
-          <Button onClick={() => window.print()}>
+          <Button
+            onClick={() => {
+              if (batch) void supabase.rpc("fn_record_print", { p_batch_id: batch });
+              window.print();
+            }}
+          >
             <Printer /> Print
           </Button>
         </div>

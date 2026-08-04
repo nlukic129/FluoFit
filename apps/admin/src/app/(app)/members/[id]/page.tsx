@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Plus } from "lucide-react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -48,23 +49,55 @@ type Detail = {
   levels: { ordinal: number; name: string; threshold_xp: number; reached: boolean; perks: string[] }[];
   scans: Scan[];
   boxes: { human_code: string; status: string; activated_at: string | null }[];
-  orders: { amount: number; charge_status: string; paid_at: string | null; created_at: string }[];
+  orders: { id: string; amount: number; charge_status: string; paid_at: string | null; created_at: string }[];
   shipments: { status: string; tracking_ref: string | null; shipped_at: string | null; delivered_at: string | null; days_in_transit: number | null }[];
   referred_by: string | null;
   is_referrer: boolean;
   tickets: { subject: string | null; status: string; created_at: string }[];
 };
 
+type TimelineEvent = { at: string; kind: string; title: string; detail: string | null };
+type Note = { id: string; body: string; author_email: string | null; created_at: string };
+type ReferrerInfo = { kind: string; status: string; ref_code: string; fixed_pct: number | null; current_tier: number | null; active_subs: number };
+
+// A single reusable action: optional reason + optional extra text inputs, runs an RPC.
+type ActionSpec = {
+  title: string;
+  desc?: string;
+  confirmLabel: string;
+  destructive?: boolean;
+  reason?: boolean;
+  extra?: { key: string; label: string; placeholder?: string }[];
+  run: (v: { reason: string; extra: Record<string, string> }) => Promise<{ error: { message: string } | null }>;
+};
+
 export default function MemberDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const [d, setD] = useState<Detail | null>(null);
+  const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [referrer, setReferrer] = useState<ReferrerInfo | null>(null);
+  const [action, setAction] = useState<ActionSpec | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const { data, error } = await supabase.rpc("fn_admin_member_detail", { p_profile: params.id });
-    if (error) setError(error.message);
-    else setD(data as Detail);
+    const id = params.id;
+    const [det, tl, no, rf] = await Promise.all([
+      supabase.rpc("fn_admin_member_detail", { p_profile: id }),
+      supabase.rpc("fn_admin_member_timeline", { p_profile: id, p_limit: 60 }),
+      supabase.rpc("fn_admin_list_notes", { p_profile: id }),
+      supabase.rpc("fn_admin_member_referrer", { p_profile: id }),
+    ]);
+    if (det.error) {
+      setError(det.error.message);
+      return;
+    }
+    setD(det.data as Detail);
+    setTimeline((tl.data as TimelineEvent[]) ?? []);
+    setNotes((no.data as Note[]) ?? []);
+    const rfArr = (rf.data as ReferrerInfo[]) ?? [];
+    setReferrer(rfArr.length ? rfArr[0]! : null);
   }, [params.id]);
 
   useEffect(() => {
@@ -91,6 +124,23 @@ export default function MemberDetailPage() {
     ["lapsed", "cancelled"].includes(d.subscription?.status ?? "") ||
     !d.subscription;
 
+  // ── Action specs (all reason-gated + audited server-side) ──
+  const pid = d.profile_id;
+  const rpc = async (fn: string, args: Record<string, unknown>) => {
+    const { error } = await supabase.rpc(fn, args);
+    return { error };
+  };
+  const blockSpec: ActionSpec = { title: "Block member", desc: "Bars this account from the Agent program and flags it.", confirmLabel: "Block", destructive: true, reason: true, run: ({ reason }) => rpc("fn_block_member", { p_profile: pid, p_reason: reason }) };
+  const unblockSpec: ActionSpec = { title: "Unblock member", confirmLabel: "Unblock", reason: true, run: ({ reason }) => rpc("fn_unblock_member", { p_profile: pid, p_reason: reason }) };
+  const resendSpec: ActionSpec = { title: "Resend login link", desc: "Sends a fresh passwordless login link (simulated — NotifyPort).", confirmLabel: "Send link", run: ({ reason }) => rpc("fn_admin_resend_login", { p_profile: pid, p_reason: reason || null }) };
+  const cancelSpec: ActionSpec = { title: "Cancel subscription", desc: "Sets the subscription to cancelled. Does not touch the benefit clock.", confirmLabel: "Cancel subscription", destructive: true, reason: true, run: ({ reason }) => rpc("fn_admin_set_sub_status", { p_profile: pid, p_status: "cancelled", p_reason: reason }) };
+  const pauseSpec: ActionSpec = { title: "Pause subscription", confirmLabel: "Pause", reason: true, run: ({ reason }) => rpc("fn_admin_set_sub_status", { p_profile: pid, p_status: "paused", p_reason: reason }) };
+  const resumeSpec: ActionSpec = { title: "Resume subscription", confirmLabel: "Resume", reason: true, run: ({ reason }) => rpc("fn_admin_set_sub_status", { p_profile: pid, p_status: "active", p_reason: reason }) };
+  const fixAttrSpec: ActionSpec = { title: "Fix referral attribution", desc: "Re-point this member's subscription to the referrer that owns the ref code.", confirmLabel: "Set attribution", reason: true, extra: [{ key: "code", label: "Ref code", placeholder: "REF-XXXX / AG-XXXX" }], run: ({ reason, extra }) => rpc("fn_admin_set_attribution", { p_profile: pid, p_ref_code: extra.code, p_reason: reason }) };
+  const manualActivateSpec: ActionSpec = { title: "Manually activate a box", desc: "Activate a Box on this member's behalf (e.g. their QR won't scan).", confirmLabel: "Activate", reason: true, extra: [{ key: "code", label: "Box code", placeholder: "human code under the seal" }], run: ({ reason, extra }) => rpc("fn_admin_manual_activate", { p_code: extra.code, p_profile: pid, p_reason: reason }) };
+  const refundSpec = (orderId: string): ActionSpec => ({ title: "Refund order", desc: "Marks the captured order refunded (simulated — PaymentPort).", confirmLabel: "Refund", destructive: true, reason: true, run: ({ reason }) => rpc("fn_admin_refund_order", { p_order: orderId, p_reason: reason }) });
+  const subActive = d.subscription && d.subscription.status !== "cancelled";
+
   return (
     <>
       <Button variant="ghost" size="sm" onClick={() => router.push("/members")}>
@@ -100,13 +150,23 @@ export default function MemberDetailPage() {
         title={d.email ?? "Member"}
         subtitle={`${d.display_name ? d.display_name + " · " : ""}joined ${new Date(d.joined).toLocaleDateString("en-US")} · ${d.account_timezone}`}
         actions={
-          <div className="flex gap-1">
-            {d.roles.map((r) => (
-              <Badge key={r} tone={r === "admin" ? "danger" : r === "member" ? "neutral" : "info"}>
-                {r}
-              </Badge>
-            ))}
-            {d.blocked && <Badge tone="danger">blocked</Badge>}
+          <div className="flex items-center gap-2">
+            <div className="flex gap-1">
+              {d.roles.map((r) => (
+                <Badge key={r} tone={r === "admin" ? "danger" : r === "member" ? "neutral" : "info"}>
+                  {r}
+                </Badge>
+              ))}
+              {d.blocked && <Badge tone="danger">blocked</Badge>}
+            </div>
+            <ActionsMenu
+              items={[
+                d.blocked
+                  ? { label: "Unblock member", onClick: () => setAction(unblockSpec) }
+                  : { label: "Block member", destructive: true, onClick: () => setAction(blockSpec) },
+                ...(subActive ? [{ label: "Cancel subscription", destructive: true, onClick: () => setAction(cancelSpec) }] : []),
+              ]}
+            />
           </div>
         }
       />
@@ -134,6 +194,16 @@ export default function MemberDetailPage() {
                 <Line k="Last paid">{d.subscription.last_paid_order_at ? new Date(d.subscription.last_paid_order_at).toLocaleDateString("en-US") : "—"}</Line>
                 <Line k="Referred by">{d.referred_by ?? "—"}</Line>
                 {d.subscription.ref_code && <Line k="Ref code">{d.subscription.ref_code}</Line>}
+                <div className="flex flex-wrap gap-2 pt-2">
+                  {d.subscription.status === "paused" ? (
+                    <Button size="sm" variant="outline" onClick={() => setAction(resumeSpec)}>Resume</Button>
+                  ) : (
+                    d.subscription.status !== "cancelled" && (
+                      <Button size="sm" variant="outline" onClick={() => setAction(pauseSpec)}>Pause</Button>
+                    )
+                  )}
+                  <Button size="sm" variant="outline" onClick={() => setAction(fixAttrSpec)}>Fix attribution</Button>
+                </div>
               </>
             ) : (
               <p className="text-muted-foreground">No subscription (Prospect).</p>
@@ -228,10 +298,66 @@ export default function MemberDetailPage() {
 
       {/* Boxes + Orders + Tickets */}
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <ListCard title="Boxes" items={d.boxes} row={(b, i) => twoCol(b.human_code, b.status, i)} />
-        <ListCard title="Orders" items={d.orders} row={(o, i) => twoCol(rsd(o.amount), o.charge_status, i)} />
+        <ListCard
+          title="Boxes"
+          items={d.boxes}
+          action={
+            <Button size="sm" variant="ghost" onClick={() => setAction(manualActivateSpec)}>
+              <Plus /> Activate
+            </Button>
+          }
+          row={(b, i) => twoCol(b.human_code, b.status, i)}
+        />
+        <ListCard
+          title="Orders"
+          items={d.orders}
+          row={(o, i) => (
+            <div key={i} className="flex items-center justify-between border-b border-border py-1.5 last:border-0">
+              <span className="tabular">{rsd(o.amount)}</span>
+              <span className="flex items-center gap-2">
+                <Badge tone={o.charge_status === "captured" ? "success" : o.charge_status === "refunded" ? "warning" : "neutral"}>
+                  {o.charge_status}
+                </Badge>
+                {o.charge_status === "captured" && (
+                  <button className="text-xs font-medium text-primary hover:underline" onClick={() => setAction(refundSpec(o.id))}>
+                    Refund
+                  </button>
+                )}
+              </span>
+            </div>
+          )}
+        />
         <ListCard title="Support tickets" items={d.tickets} row={(t, i) => twoCol(t.subject ?? "—", t.status, i)} />
       </div>
+
+      {/* Referrer link-out */}
+      {referrer && (
+        <div className="mt-6 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 text-sm">
+          <Badge tone="info">{referrer.kind}</Badge>
+          <span className="text-muted-foreground">
+            This member is also a referrer — code <span className="tabular font-medium text-foreground">{referrer.ref_code}</span> ·{" "}
+            {referrer.active_subs} active referred subs · status {referrer.status}
+          </span>
+          <Link href="/referrers" className="ml-auto inline-flex items-center gap-1 font-medium text-primary hover:underline">
+            Open in Referrers <ExternalLink className="size-3.5" />
+          </Link>
+        </div>
+      )}
+
+      {/* Notes */}
+      <div className="mt-6">
+        <NotesCard profileId={d.profile_id} notes={notes} onChanged={load} />
+      </div>
+
+      {/* Activity timeline */}
+      <Card className="mt-6">
+        <CardHeader><CardTitle>Activity timeline</CardTitle></CardHeader>
+        <CardContent>
+          <Timeline events={timeline} />
+        </CardContent>
+      </Card>
+
+      {action && <ActionRunner spec={action} onClose={() => setAction(null)} onDone={load} />}
     </>
   );
 }
@@ -272,11 +398,13 @@ function ListCard<T>({
   items,
   row,
   limit = 5,
+  action,
 }: {
   title: string;
   items: T[];
   row: (item: T, i: number) => React.ReactNode;
   limit?: number;
+  action?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -286,11 +414,14 @@ function ListCard<T>({
           {title}
           {items.length > 0 && <span className="ml-1 font-normal text-muted-foreground">({items.length})</span>}
         </CardTitle>
-        {items.length > limit && (
-          <Button variant="ghost" size="sm" onClick={() => setOpen(true)}>
-            View all
-          </Button>
-        )}
+        <div className="flex items-center gap-1">
+          {action}
+          {items.length > limit && (
+            <Button variant="ghost" size="sm" onClick={() => setOpen(true)}>
+              View all
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="text-sm">
         {items.length === 0 ? <p className="text-muted-foreground">None.</p> : items.slice(0, limit).map(row)}
@@ -444,5 +575,169 @@ function CorrectionCard({ profileId, onChanged }: { profileId: string; onChanged
         {msg && <p className="text-xs">{msg}</p>}
       </CardContent>
     </Card>
+  );
+}
+
+// Header dropdown for account-level actions.
+function ActionsMenu({ items }: { items: { label: string; onClick: () => void; destructive?: boolean }[] }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative">
+      <Button variant="outline" size="sm" onClick={() => setOpen((o) => !o)}>
+        Actions <ChevronDown />
+      </Button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 z-20 mt-1 w-52 rounded-md border border-border bg-card p-1 shadow-md">
+            {items.map((it) => (
+              <button
+                key={it.label}
+                className={cn(
+                  "block w-full rounded px-2 py-1.5 text-left text-sm hover:bg-muted",
+                  it.destructive && "text-destructive",
+                )}
+                onClick={() => {
+                  setOpen(false);
+                  it.onClick();
+                }}
+              >
+                {it.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// Runs one ActionSpec: renders reason + extra inputs, calls the RPC, reloads on success.
+function ActionRunner({ spec, onClose, onDone }: { spec: ActionSpec; onClose: () => void; onDone: () => void }) {
+  const [reason, setReason] = useState("");
+  const [extra, setExtra] = useState<Record<string, string>>({});
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const extraOk = (spec.extra ?? []).every((f) => (extra[f.key] ?? "").trim());
+  const canRun = (!spec.reason || reason.trim()) && extraOk;
+
+  async function go() {
+    setBusy(true);
+    setErr(null);
+    const { error } = await spec.run({ reason, extra });
+    setBusy(false);
+    if (error) setErr(error.message);
+    else {
+      onDone();
+      onClose();
+    }
+  }
+
+  return (
+    <Modal open onClose={onClose} title={spec.title}>
+      {spec.desc && <p className="text-sm text-muted-foreground">{spec.desc}</p>}
+      {(spec.extra ?? []).map((f) => (
+        <div key={f.key} className="space-y-1.5">
+          <Label>{f.label}</Label>
+          <Input placeholder={f.placeholder} value={extra[f.key] ?? ""} onChange={(e) => setExtra((s) => ({ ...s, [f.key]: e.target.value }))} />
+        </div>
+      ))}
+      {spec.reason && (
+        <div className="space-y-1.5">
+          <Label>Reason (required — audited)</Label>
+          <Input value={reason} onChange={(e) => setReason(e.target.value)} />
+        </div>
+      )}
+      {err && <p className="text-sm text-destructive">⚠️ {err}</p>}
+      <div className="flex justify-end gap-2 pt-1">
+        <Button variant="outline" onClick={onClose}>Cancel</Button>
+        <Button variant={spec.destructive ? "destructive" : "default"} disabled={!canRun || busy} onClick={go}>
+          {busy ? "Working…" : spec.confirmLabel}
+        </Button>
+      </div>
+    </Modal>
+  );
+}
+
+function NotesCard({ profileId, notes, onChanged }: { profileId: string; notes: Note[]; onChanged: () => void }) {
+  const [body, setBody] = useState("");
+  const [busy, setBusy] = useState(false);
+  async function add() {
+    setBusy(true);
+    const { error } = await supabase.rpc("fn_admin_add_note", { p_profile: profileId, p_body: body });
+    setBusy(false);
+    if (!error) {
+      setBody("");
+      onChanged();
+    }
+  }
+  return (
+    <Card>
+      <CardHeader><CardTitle>Internal notes</CardTitle></CardHeader>
+      <CardContent className="space-y-3">
+        <div className="flex gap-2">
+          <Input placeholder="Add a note (e.g. called re delivery, promised reship)…" value={body} onChange={(e) => setBody(e.target.value)} />
+          <Button size="sm" disabled={!body.trim() || busy} onClick={add}>Add</Button>
+        </div>
+        <div className="max-h-64 space-y-2 overflow-y-auto">
+          {notes.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No notes yet.</p>
+          ) : (
+            notes.map((n) => (
+              <div key={n.id} className="rounded-md border border-border px-3 py-2 text-sm">
+                <div>{n.body}</div>
+                <div className="mt-1 text-xs text-muted-foreground">
+                  {n.author_email ?? "admin"} · {new Date(n.created_at).toLocaleString("en-US")}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+const TIMELINE_TONE: Record<string, string> = {
+  signup: "bg-blue-400",
+  order: "bg-indigo-400",
+  payment: "bg-emerald-500",
+  shipment: "bg-sky-400",
+  ticket: "bg-amber-400",
+  note: "bg-slate-400",
+  admin: "bg-red-400",
+};
+
+const TIMELINE_PREVIEW = 8;
+
+function Timeline({ events }: { events: TimelineEvent[] }) {
+  const [all, setAll] = useState(false);
+  if (events.length === 0) return <p className="text-sm text-muted-foreground">No activity yet.</p>;
+  const shown = all ? events : events.slice(0, TIMELINE_PREVIEW);
+  return (
+    <div>
+      <div className={cn("space-y-0", all && "max-h-96 overflow-y-auto pr-1")}>
+        {shown.map((e, i) => (
+          <div key={i} className="flex gap-3 border-b border-border py-2 last:border-0">
+            <span className={cn("mt-1.5 size-2 shrink-0 rounded-full", TIMELINE_TONE[e.kind] ?? "bg-muted")} />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="text-sm font-medium">{e.title}</span>
+                <span className="shrink-0 text-xs text-muted-foreground">{new Date(e.at).toLocaleString("en-US")}</span>
+              </div>
+              {e.detail && <div className="truncate text-xs text-muted-foreground">{e.detail}</div>}
+            </div>
+          </div>
+        ))}
+      </div>
+      {events.length > TIMELINE_PREVIEW && (
+        <div className="pt-3 text-center">
+          <Button variant="ghost" size="sm" onClick={() => setAll((a) => !a)}>
+            {all ? "Show less" : `Show all ${events.length}`}
+          </Button>
+        </div>
+      )}
+    </div>
   );
 }

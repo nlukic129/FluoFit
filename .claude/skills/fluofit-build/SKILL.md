@@ -29,10 +29,14 @@ linked doc for detail — **one fact = one place**, never copy it here.
    the sync date**; server **clamps** timestamps (reject future, clamp backdating). Dedup per
    `(Member, date)`. → [ARCHITECTURE §2](../../../docs/ARCHITECTURE.md#2-offline-session--scanning-).
 
-3. **Consent — not role — is the gate for coaching data.** A referrer (Agent *or* Affiliate)
-   sees a client's identity + day-level consumption **only** with that client's explicit,
-   separate, revocable opt-in. No cross-referrer leakage; **time-of-day is never shared**.
-   Enforce in **RLS** (join on the consent table), not UI. → [ADR-0003](../../../docs/adr/0003-affiliate-consent-boundary.md),
+3. **Attribution — not consent — is the gate for coaching data, and it is anonymized.**
+   *(Revised 2026-08-04 — reverses the old consent model.)* A referrer (Agent *or* Affiliate)
+   sees the activity of any client **attributed to them, automatically** — which Sachets, **including
+   time-of-day**, streak, adherence — but **NEVER the client's identity** (no name/email; only a
+   pseudonymous `client_profile_id`). No opt-in, no per-member toggle. No cross-referrer leakage.
+   Enforce in **RLS / `can_coach()` joined on `attributions`** and by keeping identity columns OUT
+   of `v_coaching_consumption` — not in UI. The `consents` table is **dormant/deprecated**.
+   → [ADR-0003](../../../docs/adr/0003-affiliate-consent-boundary.md) (revised),
    [agent-affiliate-app §2](../../../docs/product/agent-affiliate-app.md).
 
 4. **Level never drops; config is grandfathered per-dial.** A threshold change never demotes an

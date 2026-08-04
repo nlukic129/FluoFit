@@ -1,6 +1,26 @@
-# Affiliates see client consumption only via separate, explicit opt-in
+# Referrers see referred-client consumption — automatic + anonymized (revised)
 
-## Context
+> **Revised 2026-08-04 — supersedes the opt-in model below.** The consent gate is removed. A
+> referrer now **automatically** sees the activity of any client attributed to them —
+> which sachets were scanned, **including time-of-day**, streak and adherence — but **never** the
+> client's **identity** (no name, no email; only a pseudonymous id). There is no opt-in checkbox
+> and no per-member toggle. Rationale: the coaching feature is core to the referral value
+> proposition and near-useless when dark; anonymization (dropping name/email) is judged an
+> acceptable privacy posture for the founder's risk appetite. **Enforcement:** the gate is now
+> `can_coach()` joined on **`attributions`** (not `consents`); the `v_coaching_consumption` view
+> exposes `client_profile_id + scan_date_local + scanned_at + earned` and **no identity columns**
+> (migration `0041`). The `consents` table is left **dormant** (deprecated, not dropped).
+>
+> **Caveat on record:** because a referrer usually recruited the client personally, hiding
+> name/email is weak anonymization and time-of-day reveals daily routine — this may still be
+> personal data under GDPR/PDPL. Accepted by the founder as a product decision. Revisit if
+> entering the EU market or if a DPO review is undertaken.
+>
+> The original consent-gated decision (kept below for history) no longer holds.
+
+---
+
+## Context (original — superseded)
 
 The Affiliate dashboard's differentiating feature is letting a trainer see a referred client's consumption ("how many Sachets, when to nudge"). This is personal data about an identified individual, shared with a third party (the trainer). GDPR / UAE PDPL require consent that is specific, informed, unbundled, and revocable — bundling it into blanket privacy-policy acceptance makes the consent invalid.
 

@@ -120,7 +120,7 @@ export type Summary = {
     smart_pending: number;
     held_commissions_n: number;
     held_commissions_sum: number;
-    unbound_aging: number;
+    expiring_stock: number;
     open_tickets: number;
   };
 };

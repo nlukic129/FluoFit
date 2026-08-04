@@ -39,12 +39,12 @@ export default function SummaryPage() {
   if (!s) return <p className="text-sm text-muted-foreground">Loading…</p>;
 
   const na = s.needs_attention;
-  const attentions = [
-    { label: "Lapse-risk (≤5 days)", value: na.lapse_risk, href: "/members", icon: Clock, warn: na.lapse_risk > 0 },
-    { label: "Smart, not scanning", value: na.smart_pending, href: "/members", icon: AlertTriangle, warn: na.smart_pending > 0 },
-    { label: "Held commissions", value: `${na.held_commissions_n} · ${rsd(na.held_commissions_sum)}`, href: "/fraud", icon: ShieldAlert, warn: na.held_commissions_n > 0 },
-    { label: "Aging unbound boxes", value: na.unbound_aging, href: "/provisioning", icon: PackageX, warn: na.unbound_aging > 0 },
-    { label: "Open tickets", value: na.open_tickets, href: "/support", icon: LifeBuoy, warn: na.open_tickets > 0 },
+  const attentions: { label: string; value: number; sub?: string; href: string; icon: typeof Clock; warn: boolean }[] = [
+    { label: "Lapse-risk (≤5 days)", value: na.lapse_risk, sub: "about to lapse", href: "/members?flag=lapse_risk", icon: Clock, warn: na.lapse_risk > 0 },
+    { label: "Smart, not scanning", value: na.smart_pending, sub: "paid, never scanned", href: "/members?flag=smart_pending", icon: AlertTriangle, warn: na.smart_pending > 0 },
+    { label: "Held commissions", value: na.held_commissions_n, sub: `${rsd(na.held_commissions_sum)} · to review`, href: "/fraud", icon: ShieldAlert, warn: na.held_commissions_n > 0 },
+    { label: "Expiring stock", value: na.expiring_stock, sub: "unbound, ≤90 days to expiry", href: "/provisioning/boxes?flag=expiring", icon: PackageX, warn: na.expiring_stock > 0 },
+    { label: "Open tickets", value: na.open_tickets, sub: "in the queue", href: "/support", icon: LifeBuoy, warn: na.open_tickets > 0 },
   ];
 
   return (
@@ -62,6 +62,7 @@ export default function SummaryPage() {
                     <a.icon className={a.warn ? "size-4 text-amber-500" : "size-4 text-muted-foreground"} />
                   </div>
                   <div className="tabular mt-1 text-xl font-semibold">{a.value}</div>
+                  {a.sub && <div className="mt-0.5 text-xs text-muted-foreground">{a.sub}</div>}
                 </CardContent>
               </Card>
             </Link>
@@ -78,7 +79,9 @@ export default function SummaryPage() {
           <DeltaKpi label="New members" value={num(s.kpis.new_members)} delta={pct(s.kpis.new_members, s.kpis_prev.new_members)} />
           <DeltaKpi label="Lapsed (period)" value={num(s.kpis.lapsed_period)} delta={pct(s.kpis.lapsed_period, s.kpis_prev.lapsed_period)} goodWhenUp={false} />
           <Tile label="ARPU" value={s.kpis.arpu != null ? rsd(s.kpis.arpu) : "—"} />
-          <Tile label="Pending payout" value={rsd(s.kpis.pending_payout)} />
+          <Link href="/payouts" className="transition-opacity hover:opacity-80">
+            <Tile label="Pending payout" value={rsd(s.kpis.pending_payout)} sub="ready to pay → Payouts" />
+          </Link>
         </div>
       </section>
 
