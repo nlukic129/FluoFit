@@ -4,8 +4,13 @@ import type { ReactNode } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-export function SectionTitle({ children }: { children: ReactNode }) {
-  return <h2 className="mb-3 text-sm font-semibold text-muted-foreground">{children}</h2>;
+export function SectionTitle({ children, hint }: { children: ReactNode; hint?: string }) {
+  return (
+    <div className="mb-3 flex items-baseline gap-2">
+      <h2 className="text-sm font-semibold text-muted-foreground">{children}</h2>
+      {hint && <span className="text-xs font-normal text-muted-foreground/70">· {hint}</span>}
+    </div>
+  );
 }
 
 export function Tile({ label, value, sub, icon: Icon }: { label: string; value: string; sub?: string; icon?: LucideIcon }) {

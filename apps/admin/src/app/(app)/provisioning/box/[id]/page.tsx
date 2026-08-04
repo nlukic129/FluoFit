@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Copy, Printer, Trash2 } from "lucide-react";
+import { ArrowLeft, Copy, Printer, Trash2, Unlink } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
@@ -60,6 +60,8 @@ export default function BoxDetailPage() {
   const [copied, setCopied] = useState(false);
 
   const [voidOpen, setVoidOpen] = useState(false);
+  const [unbindOpen, setUnbindOpen] = useState(false);
+  const [rebindEmail, setRebindEmail] = useState("");
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -85,6 +87,24 @@ export default function BoxDetailPage() {
     else {
       setVoidOpen(false);
       setReason("");
+      await load();
+    }
+  }
+
+  async function confirmUnbind() {
+    if (!box) return;
+    setBusy(true);
+    const { error: e } = await supabase.rpc("fn_admin_unbind_rebind_email", {
+      p_box_id: box.id,
+      p_email: rebindEmail.trim() || null,
+      p_reason: reason,
+    });
+    setBusy(false);
+    if (e) setError(e.message);
+    else {
+      setUnbindOpen(false);
+      setReason("");
+      setRebindEmail("");
       await load();
     }
   }
@@ -137,10 +157,15 @@ export default function BoxDetailPage() {
                 <div className="text-xs text-muted-foreground">Status</div>
                 <Badge tone={statusTone(box.status)}>{box.status}</Badge>
               </div>
-              <div className="flex gap-2 pt-1">
+              <div className="flex flex-wrap gap-2 pt-1">
                 <Button size="sm" variant="outline" onClick={() => router.push(`/provisioning/print?batch=${box.lot.id}`)}>
                   <Printer /> Reprint (lot)
                 </Button>
+                {box.status === "activated" && (
+                  <Button size="sm" variant="outline" onClick={() => setUnbindOpen(true)}>
+                    <Unlink /> Unbind / rebind
+                  </Button>
+                )}
                 {box.status === "unbound" && (
                   <Button size="sm" variant="destructive" onClick={() => setVoidOpen(true)}>
                     <Trash2 /> Void
@@ -258,6 +283,29 @@ export default function BoxDetailPage() {
           </Button>
           <Button variant="destructive" disabled={!reason.trim() || busy} onClick={confirmVoid}>
             {busy ? "Voiding…" : "Void box"}
+          </Button>
+        </div>
+      </Modal>
+
+      <Modal open={unbindOpen} onClose={() => setUnbindOpen(false)} title="Unbind / rebind box">
+        <p className="text-sm text-muted-foreground">
+          Detach <span className="tabular font-medium text-foreground">{box?.human_code}</span> from its current owner.
+          Leave the email empty to just unbind, or enter a member email to rebind it to them. A reason is required (audited).
+        </p>
+        <div className="space-y-1.5">
+          <Label htmlFor="rebind-email">Rebind to member email (optional)</Label>
+          <Input id="rebind-email" type="email" placeholder="leave empty to only unbind" value={rebindEmail} onChange={(e) => setRebindEmail(e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="unbind-reason">Reason</Label>
+          <Input id="unbind-reason" placeholder="activated on wrong account" value={reason} onChange={(e) => setReason(e.target.value)} />
+        </div>
+        <div className="flex justify-end gap-2 pt-1">
+          <Button variant="outline" onClick={() => setUnbindOpen(false)}>
+            Cancel
+          </Button>
+          <Button disabled={!reason.trim() || busy} onClick={confirmUnbind}>
+            {busy ? "Working…" : rebindEmail.trim() ? "Unbind & rebind" : "Unbind"}
           </Button>
         </div>
       </Modal>

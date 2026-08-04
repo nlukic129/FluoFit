@@ -6,7 +6,7 @@ import { Select } from "@/components/ui/select";
 import { PRESETS, computeRange, currentMonthKey, type Overview } from "@/lib/overview";
 import { supabase } from "@/lib/supabase/client";
 
-type Filters = { period: string; month: string; city: string; from: Date; to: Date };
+type Filters = { period: string; month: string; city: string; from: Date; to: Date; label: string };
 const Ctx = createContext<Filters | null>(null);
 
 export function useOverviewFilters(): Filters {
@@ -47,9 +47,13 @@ export function OverviewFiltersProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const { from, to } = computeRange(period, month);
+  const label =
+    period === "custom"
+      ? new Date(`${month}-01`).toLocaleDateString("en-US", { month: "long", year: "numeric" })
+      : (PRESETS.find((p) => p.key === period)?.label ?? "selected period");
 
   return (
-    <Ctx.Provider value={{ period, month, city, from, to }}>
+    <Ctx.Provider value={{ period, month, city, from, to, label }}>
       <div className="mb-6 flex flex-wrap items-center gap-2">
         <Select className="w-40" value={period} onChange={(e) => setPeriod(e.target.value)}>
           {PRESETS.map((p) => (

@@ -53,7 +53,7 @@ type Detail = {
   shipments: { status: string; tracking_ref: string | null; shipped_at: string | null; delivered_at: string | null; days_in_transit: number | null }[];
   referred_by: string | null;
   is_referrer: boolean;
-  tickets: { subject: string | null; status: string; created_at: string }[];
+  tickets: { id: string; subject: string | null; status: string; created_at: string }[];
 };
 
 type TimelineEvent = { at: string; kind: string; title: string; detail: string | null };
@@ -306,7 +306,16 @@ export default function MemberDetailPage() {
               <Plus /> Activate
             </Button>
           }
-          row={(b, i) => twoCol(b.human_code, b.status, i)}
+          row={(b, i) => (
+            <Link
+              key={i}
+              href={`/provisioning/box/${encodeURIComponent(b.human_code)}`}
+              className="-mx-2 flex justify-between rounded px-2 py-1.5 hover:bg-muted"
+            >
+              <span className="tabular font-medium">{b.human_code}</span>
+              <span className="text-muted-foreground">{b.status}</span>
+            </Link>
+          )}
         />
         <ListCard
           title="Orders"
@@ -327,7 +336,20 @@ export default function MemberDetailPage() {
             </div>
           )}
         />
-        <ListCard title="Support tickets" items={d.tickets} row={(t, i) => twoCol(t.subject ?? "—", t.status, i)} />
+        <ListCard
+          title="Support tickets"
+          items={d.tickets}
+          row={(t, i) => (
+            <Link
+              key={i}
+              href={`/support?focus=${t.id}`}
+              className="-mx-2 flex justify-between gap-2 rounded px-2 py-1.5 hover:bg-muted"
+            >
+              <span className="truncate">{t.subject ?? "—"}</span>
+              <span className="shrink-0 text-muted-foreground">{t.status}</span>
+            </Link>
+          )}
+        />
       </div>
 
       {/* Referrer link-out */}
@@ -379,15 +401,6 @@ function Line({ k, children }: { k: string; children: React.ReactNode }) {
     <div className="flex items-center justify-between gap-3">
       <span className="text-muted-foreground">{k}</span>
       <span className="text-right font-medium">{children}</span>
-    </div>
-  );
-}
-
-function twoCol(a: string, b: string, key: React.Key) {
-  return (
-    <div key={key} className="flex justify-between border-b border-border py-1.5 last:border-0">
-      <span className="tabular">{a}</span>
-      <span className="text-muted-foreground">{b}</span>
     </div>
   );
 }
