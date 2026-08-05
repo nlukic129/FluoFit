@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
+import { CityAutocomplete } from "@/components/city-autocomplete";
 import { Pager } from "@/components/pager";
 import { PageHeader } from "@/components/page-shell";
 import { Badge } from "@/components/ui/badge";
@@ -476,7 +477,7 @@ function OpenWaveModal({ onClose, onSaved, onError }: { onClose: () => void; onS
         </div>
         <div className="space-y-1.5">
           <Label>City focus (optional)</Label>
-          <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="Valjevo" />
+          <CityAutocomplete value={city} onChange={setCity} />
         </div>
       </div>
       <div className="space-y-1.5">

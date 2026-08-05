@@ -28,6 +28,7 @@ export const NAV: NavItem[] = [
       { label: "Growth", href: "/overview/growth" },
       { label: "Retention", href: "/overview/retention" },
       { label: "Referrers", href: "/overview/referrers" },
+      { label: "Geography", href: "/overview/geography" },
       { label: "Operations", href: "/overview/operations" },
     ],
   },

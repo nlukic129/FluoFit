@@ -3,6 +3,8 @@
 import { ArrowLeft, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Plus } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+
+import { AddressAutocomplete, type PickedAddress } from "@/components/address-autocomplete";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { PageHeader } from "@/components/page-shell";
@@ -79,6 +81,7 @@ export default function MemberDetailPage() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [referrer, setReferrer] = useState<ReferrerInfo | null>(null);
   const [action, setAction] = useState<ActionSpec | null>(null);
+  const [addrOpen, setAddrOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -164,6 +167,7 @@ export default function MemberDetailPage() {
                 d.blocked
                   ? { label: "Unblock member", onClick: () => setAction(unblockSpec) }
                   : { label: "Block member", destructive: true, onClick: () => setAction(blockSpec) },
+                { label: "Edit delivery address", onClick: () => setAddrOpen(true) },
                 ...(subActive ? [{ label: "Cancel subscription", destructive: true, onClick: () => setAction(cancelSpec) }] : []),
               ]}
             />
@@ -380,7 +384,68 @@ export default function MemberDetailPage() {
       </Card>
 
       {action && <ActionRunner spec={action} onClose={() => setAction(null)} onDone={load} />}
+      {addrOpen && <AddressModal profileId={d.profile_id} onClose={() => setAddrOpen(false)} onDone={load} />}
     </>
+  );
+}
+
+function AddressModal({ profileId, onClose, onDone }: { profileId: string; onClose: () => void; onDone: () => void }) {
+  const [picked, setPicked] = useState<PickedAddress | null>(null);
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function save() {
+    if (!picked) return;
+    setBusy(true);
+    setErr(null);
+    const { error } = await supabase.rpc("fn_admin_set_member_address", {
+      p_profile: profileId,
+      p_line1: picked.line1,
+      p_city: picked.city,
+      p_municipality: picked.municipality,
+      p_postal: picked.postal,
+      p_country: picked.country,
+      p_place_id: picked.place_id,
+      p_lat: picked.lat,
+      p_lng: picked.lng,
+      p_reason: reason,
+    });
+    setBusy(false);
+    if (error) setErr(error.message);
+    else {
+      onDone();
+      onClose();
+    }
+  }
+
+  return (
+    <Modal open onClose={onClose} title="Edit delivery address">
+      <p className="text-sm text-muted-foreground">
+        Search with Google Places — city, municipality (opština) and coordinates fill in automatically.
+      </p>
+      <AddressAutocomplete onPick={setPicked} />
+      {picked && (
+        <div className="rounded-md border border-border bg-muted/40 p-3 text-xs">
+          <div className="font-medium text-foreground">{picked.line1 || "—"}</div>
+          <div className="text-muted-foreground">
+            {picked.municipality ?? "—"} · {picked.city ?? "—"} · {picked.postal ?? ""}{" "}
+            {picked.lat != null && `· ${picked.lat.toFixed(4)}, ${picked.lng?.toFixed(4)}`}
+          </div>
+        </div>
+      )}
+      <div className="space-y-1.5">
+        <Label>Reason (required — audited)</Label>
+        <Input value={reason} onChange={(e) => setReason(e.target.value)} />
+      </div>
+      {err && <p className="text-sm text-destructive">⚠️ {err}</p>}
+      <div className="flex justify-end gap-2 pt-1">
+        <Button variant="outline" onClick={onClose}>Cancel</Button>
+        <Button disabled={!picked || !reason.trim() || busy} onClick={save}>
+          {busy ? "Saving…" : "Save address"}
+        </Button>
+      </div>
+    </Modal>
   );
 }
 
