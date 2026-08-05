@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   LifeBuoy,
   ScrollText,
+  Settings,
   ShieldAlert,
   SlidersHorizontal,
   Store,
@@ -39,7 +40,8 @@ export const NAV: NavItem[] = [
   { label: "Affiliates", href: "/affiliates", icon: Handshake },
   { label: "Payouts", href: "/payouts", icon: Wallet },
   { label: "Fraud", href: "/fraud", icon: ShieldAlert },
-  { label: "Partners", href: "/partners", icon: Store },
+  { label: "Perks", href: "/perks", icon: Store },
   { label: "Gamification", href: "/gamification", icon: SlidersHorizontal },
+  { label: "Settings", href: "/settings", icon: Settings },
   { label: "Audit Log", href: "/audit", icon: ScrollText },
 ];

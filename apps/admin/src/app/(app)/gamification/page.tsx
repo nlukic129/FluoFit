@@ -1,6 +1,7 @@
 "use client";
 
 import { Plus } from "lucide-react";
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 import { PageHeader } from "@/components/page-shell";
@@ -12,9 +13,12 @@ import { Label } from "@/components/ui/label";
 import { Modal } from "@/components/ui/modal";
 import { Select } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { rsd } from "@/lib/overview";
 import { supabase } from "@/lib/supabase/client";
 
 type Level = { id: string; ordinal: number; threshold_xp: number; name: string; icon: string | null };
+
+const fundingTone = (f: string) => (f === "partner" ? "info" : f === "spend" ? "warning" : "neutral");
 
 export default function GamificationPage() {
   const [error, setError] = useState<string | null>(null);
@@ -22,13 +26,13 @@ export default function GamificationPage() {
     <>
       <PageHeader
         title="Gamification"
-        subtitle="Levels, perks, and referral dials. Changes are audited and grandfathered."
+        subtitle="Levels, XP and perks — with live engagement insight. Changes are audited and grandfathered."
       />
       {error && <p className="mb-4 text-sm text-destructive">⚠️ {error}</p>}
       <div className="space-y-6">
+        <InsightSection onError={setError} />
         <LevelsSection onError={setError} />
-        <PerksSection onError={setError} />
-        <DialsSection onError={setError} />
+        <LevelRewardsSection onError={setError} />
       </div>
     </>
   );
@@ -37,6 +41,7 @@ export default function GamificationPage() {
 function LevelsSection({ onError }: { onError: (m: string) => void }) {
   const [levels, setLevels] = useState<Level[]>([]);
   const [editing, setEditing] = useState<Level | "new" | null>(null);
+  const [delTarget, setDelTarget] = useState<Level | null>(null);
 
   const load = useCallback(async () => {
     const { data, error } = await supabase
@@ -50,14 +55,6 @@ function LevelsSection({ onError }: { onError: (m: string) => void }) {
   useEffect(() => {
     void load();
   }, [load]);
-
-  async function del(l: Level) {
-    const reason = window.prompt(`Delete Level "${l.name}"? Reason:`);
-    if (!reason) return;
-    const { error } = await supabase.rpc("fn_delete_level", { p_id: l.id, p_reason: reason });
-    if (error) onError(error.message);
-    else await load();
-  }
 
   return (
     <Card>
@@ -97,7 +94,7 @@ function LevelsSection({ onError }: { onError: (m: string) => void }) {
                     <Button size="sm" variant="outline" onClick={() => setEditing(l)}>
                       Edit
                     </Button>
-                    <Button size="sm" variant="destructive" onClick={() => del(l)}>
+                    <Button size="sm" variant="destructive" onClick={() => setDelTarget(l)}>
                       Delete
                     </Button>
                   </TableCell>
@@ -118,6 +115,19 @@ function LevelsSection({ onError }: { onError: (m: string) => void }) {
           onError={onError}
         />
       )}
+      {delTarget && (
+        <ReasonModal
+          title={`Delete Level "${delTarget.name}"`}
+          confirmLabel="Delete level"
+          destructive
+          run={async (reason) => {
+            const { error } = await supabase.rpc("fn_delete_level", { p_id: delTarget.id, p_reason: reason });
+            return { error };
+          }}
+          onClose={() => setDelTarget(null)}
+          onDone={load}
+        />
+      )}
     </Card>
   );
 }
@@ -136,7 +146,6 @@ function LevelModal({
   const [ordinal, setOrdinal] = useState(String(level?.ordinal ?? ""));
   const [name, setName] = useState(level?.name ?? "");
   const [threshold, setThreshold] = useState(String(level?.threshold_xp ?? ""));
-  const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
 
   async function save() {
@@ -147,7 +156,7 @@ function LevelModal({
       p_threshold_xp: Number(threshold),
       p_name: name,
       p_icon: null,
-      p_reason: reason,
+      p_reason: level ? "Edited level" : "Added level",
     });
     setBusy(false);
     if (error) onError(error.message);
@@ -165,14 +174,11 @@ function LevelModal({
       <Row label="Threshold XP">
         <Input type="number" value={threshold} onChange={(e) => setThreshold(e.target.value)} />
       </Row>
-      <Row label="Reason">
-        <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="required" />
-      </Row>
       <div className="flex justify-end gap-2 pt-1">
         <Button variant="outline" onClick={onClose}>
           Cancel
         </Button>
-        <Button disabled={!name || !ordinal || !threshold || !reason.trim() || busy} onClick={save}>
+        <Button disabled={!name || !ordinal || !threshold || busy} onClick={save}>
           {busy ? "Saving…" : "Save"}
         </Button>
       </div>
@@ -180,313 +186,128 @@ function LevelModal({
   );
 }
 
-type Dial = { key: string; label: string; help: string };
-const DIALS: Dial[] = [
-  { key: "agent.eligibility_level", label: "Agent eligibility Level", help: "Level a Member must reach to apply." },
-  { key: "buyer.discount_pct", label: "Buyer discount %", help: "Applies to new buyers only." },
-  { key: "agent.tier_rates", label: "Agent tier rates (JSON)", help: "Live at the next monthly snapshot." },
-];
+type RewardPerk = {
+  id: string; name: string; benefit: string | null; funding: string; source: string;
+  level_id: string | null; level_ordinal: number | null; level_name: string | null;
+};
 
-function DialsSection({ onError }: { onError: (m: string) => void }) {
-  const [values, setValues] = useState<Record<string, string>>({});
-  const [reasons, setReasons] = useState<Record<string, string>>({});
-  const [saved, setSaved] = useState<string | null>(null);
+function LevelRewardsSection({ onError }: { onError: (m: string) => void }) {
+  const [levels, setLevels] = useState<Level[]>([]);
+  const [perks, setPerks] = useState<RewardPerk[]>([]);
+  const [attachLevel, setAttachLevel] = useState<Level | null>(null);
+  const [unattachTarget, setUnattachTarget] = useState<RewardPerk | null>(null);
 
   const load = useCallback(async () => {
-    const { data, error } = await supabase.from("config_dials").select("key,value");
-    if (error) onError(error.message);
-    else {
-      const map: Record<string, string> = {};
-      for (const r of (data as { key: string; value: unknown }[]) ?? []) {
-        map[r.key] = typeof r.value === "string" ? r.value : JSON.stringify(r.value);
-      }
-      setValues(map);
-    }
+    const [lv, pk] = await Promise.all([
+      supabase.from("levels").select("id,ordinal,threshold_xp,name,icon").order("ordinal"),
+      supabase.rpc("fn_admin_list_reward_perks"),
+    ]);
+    if (lv.data) setLevels(lv.data as Level[]);
+    if (pk.error) onError(pk.error.message);
+    else setPerks((pk.data as RewardPerk[]) ?? []);
   }, [onError]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
-  async function save(dial: Dial) {
-    const raw = values[dial.key] ?? "";
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      parsed = raw; // allow plain strings/numbers typed without quotes
-      if (!isNaN(Number(raw)) && raw.trim() !== "") parsed = Number(raw);
-    }
-    const { error } = await supabase.rpc("fn_apply_config", {
-      p_key: dial.key,
-      p_value: parsed,
-      p_reason: reasons[dial.key] ?? "",
-    });
-    if (error) onError(error.message);
-    else {
-      setSaved(dial.key);
-      setTimeout(() => setSaved(null), 2000);
-    }
-  }
+  const unattached = perks.filter((p) => !p.level_id);
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Referral & config dials</CardTitle>
-        <CardDescription>Numbers are pending COGS/pricing; the mechanism is live.</CardDescription>
+        <CardTitle>Level rewards</CardTitle>
+        <CardDescription>Attach non-public perks (FluoFit + partner) to a Level. Create perks in the Perks tab.</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {DIALS.map((d) => (
-          <div key={d.key} className="grid grid-cols-1 gap-2 border-b border-border pb-4 last:border-0 last:pb-0 md:grid-cols-[1fr_auto]">
-            <div className="space-y-1.5">
-              <Label>{d.label}</Label>
-              <p className="text-xs text-muted-foreground">{d.help}</p>
-              <Input
-                value={values[d.key] ?? ""}
-                onChange={(e) => setValues((v) => ({ ...v, [d.key]: e.target.value }))}
-              />
-            </div>
-            <div className="flex items-end gap-2">
-              <Input
-                placeholder="Reason"
-                value={reasons[d.key] ?? ""}
-                onChange={(e) => setReasons((r) => ({ ...r, [d.key]: e.target.value }))}
-              />
-              <Button
-                size="sm"
-                disabled={!(reasons[d.key] ?? "").trim()}
-                onClick={() => save(d)}
-              >
-                {saved === d.key ? "Saved ✓" : "Save"}
-              </Button>
-            </div>
-          </div>
-        ))}
-      </CardContent>
-    </Card>
-  );
-}
-
-type Perk = { id: string; name: string; funding: string; cost_hint: number | null };
-type Mapping = { level_id: string; perk_id: string };
-const fundingTone = (f: string) => (f === "partner" ? "info" : f === "spend" ? "warning" : "neutral");
-
-function PerksSection({ onError }: { onError: (m: string) => void }) {
-  const [perks, setPerks] = useState<Perk[]>([]);
-  const [levels, setLevels] = useState<Level[]>([]);
-  const [mappings, setMappings] = useState<Mapping[]>([]);
-  const [editing, setEditing] = useState<Perk | "new" | null>(null);
-  const [mapPerk, setMapPerk] = useState("");
-  const [mapLevel, setMapLevel] = useState("");
-  const [mapReason, setMapReason] = useState("");
-
-  const load = useCallback(async () => {
-    const [pk, lv, mp] = await Promise.all([
-      supabase.from("perks").select("id,name,funding,cost_hint").order("name"),
-      supabase.from("levels").select("id,ordinal,threshold_xp,name,icon").order("ordinal"),
-      supabase.from("level_perks").select("level_id,perk_id"),
-    ]);
-    if (pk.error) onError(pk.error.message);
-    else setPerks((pk.data as Perk[]) ?? []);
-    if (lv.data) setLevels(lv.data as Level[]);
-    if (mp.data) setMappings(mp.data as Mapping[]);
-  }, [onError]);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  async function map() {
-    const { error } = await supabase.rpc("fn_map_perk_level", {
-      p_level: mapLevel,
-      p_perk: mapPerk,
-      p_reason: mapReason,
-    });
-    if (error) onError(error.message);
-    else {
-      setMapReason("");
-      await load();
-    }
-  }
-
-  async function unmap(m: Mapping) {
-    const reason = window.prompt("Unmap this perk? Reason:");
-    if (!reason) return;
-    const { error } = await supabase.rpc("fn_unmap_perk_level", {
-      p_level: m.level_id,
-      p_perk: m.perk_id,
-      p_reason: reason,
-    });
-    if (error) onError(error.message);
-    else await load();
-  }
-
-  const perkName = (id: string) => perks.find((p) => p.id === id)?.name ?? id;
-  const levelName = (id: string) => levels.find((l) => l.id === id)?.name ?? id;
-
-  return (
-    <Card>
-      <CardHeader className="flex-row items-center justify-between space-y-0">
-        <div>
-          <CardTitle>Perks</CardTitle>
-          <CardDescription>Partner-funded run live; spend/zero are grandfathered at crossing.</CardDescription>
-        </div>
-        <Button size="sm" onClick={() => setEditing("new")}>
-          <Plus /> Add perk
-        </Button>
-      </CardHeader>
-      <CardContent className="space-y-5">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Funding</TableHead>
-              <TableHead>Cost hint</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {perks.length === 0 ? (
-              <TableRow>
-                <TableCell className="text-muted-foreground" colSpan={4}>
-                  No perks yet.
-                </TableCell>
-              </TableRow>
-            ) : (
-              perks.map((p) => (
-                <TableRow key={p.id}>
-                  <TableCell className="font-medium">{p.name}</TableCell>
-                  <TableCell>
-                    <Badge tone={fundingTone(p.funding)}>{p.funding}</Badge>
-                  </TableCell>
-                  <TableCell className="tabular">{p.cost_hint != null ? `${p.cost_hint} RSD` : "—"}</TableCell>
-                  <TableCell className="text-right">
-                    <Button size="sm" variant="outline" onClick={() => setEditing(p)}>
-                      Edit
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-
-        <div className="space-y-2">
-          <p className="text-sm font-medium">Map perk → Level</p>
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_1fr_1fr_auto]">
-            <Select value={mapPerk} onChange={(e) => setMapPerk(e.target.value)}>
-              <option value="">Perk…</option>
-              {perks.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </Select>
-            <Select value={mapLevel} onChange={(e) => setMapLevel(e.target.value)}>
-              <option value="">Level…</option>
-              {levels.map((l) => (
-                <option key={l.id} value={l.id}>
-                  {l.name}
-                </option>
-              ))}
-            </Select>
-            <Input placeholder="Reason" value={mapReason} onChange={(e) => setMapReason(e.target.value)} />
-            <Button disabled={!mapPerk || !mapLevel || !mapReason.trim()} onClick={map}>
-              Map
-            </Button>
-          </div>
-
-          {mappings.length > 0 && (
-            <div className="flex flex-wrap gap-2 pt-1">
-              {mappings.map((m) => (
-                <button
-                  key={`${m.level_id}-${m.perk_id}`}
-                  onClick={() => unmap(m)}
-                  className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:text-destructive"
-                  title="Unmap"
+      <CardContent className="space-y-3">
+        {levels.map((l) => {
+          const attached = perks.filter((p) => p.level_id === l.id);
+          return (
+            <div key={l.id} className="flex items-start gap-3">
+              <span className="w-24 shrink-0 pt-1 text-sm font-medium">{l.ordinal}. {l.name}</span>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {attached.map((p) => (
+                  <span key={p.id} className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-xs">
+                    {p.name}
+                    {p.benefit ? ` · ${p.benefit}` : ""}
+                    <span className="text-muted-foreground">· {p.source}</span>
+                    <button className="ml-0.5 text-muted-foreground hover:text-destructive" onClick={() => setUnattachTarget(p)} title="Unattach">✕</button>
+                  </span>
+                ))}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={unattached.length === 0}
+                  title={unattached.length === 0 ? "No unattached perks left — create one in the Perks tab first" : undefined}
+                  onClick={() => setAttachLevel(l)}
                 >
-                  {perkName(m.perk_id)} → {levelName(m.level_id)} ✕
-                </button>
-              ))}
+                  <Plus /> Add reward
+                </Button>
+              </div>
             </div>
-          )}
-        </div>
+          );
+        })}
+        {unattached.length > 0 ? (
+          <p className="pt-1 text-xs text-muted-foreground">
+            Unattached rewards: {unattached.map((p) => p.name).join(", ")}
+          </p>
+        ) : (
+          <p className="pt-1 text-xs text-muted-foreground">
+            Every non-public perk is already attached. To add another reward, create a non-public perk in the{" "}
+            <Link href="/perks" className="font-medium text-primary hover:underline">Perks tab</Link> first.
+          </p>
+        )}
       </CardContent>
-      {editing && (
-        <PerkModal
-          perk={editing === "new" ? null : editing}
-          onClose={() => setEditing(null)}
-          onSaved={() => {
-            setEditing(null);
-            void load();
+
+      {attachLevel && (
+        <AttachRewardModal level={attachLevel} options={unattached} onClose={() => setAttachLevel(null)} onDone={load} />
+      )}
+      {unattachTarget && (
+        <ConfirmModal
+          title={`Unattach "${unattachTarget.name}" from ${unattachTarget.level_name}`}
+          body="It goes back to the unattached pool — you can re-attach it any time."
+          confirmLabel="Unattach"
+          destructive
+          run={async () => {
+            const { error } = await supabase.rpc("fn_admin_attach_perk_level", { p_perk: unattachTarget.id, p_level: null, p_reason: "Unattached perk from level" });
+            return { error };
           }}
-          onError={onError}
+          onClose={() => setUnattachTarget(null)}
+          onDone={load}
         />
       )}
     </Card>
   );
 }
 
-function PerkModal({
-  perk,
-  onClose,
-  onSaved,
-  onError,
-}: {
-  perk: Perk | null;
-  onClose: () => void;
-  onSaved: () => void;
-  onError: (m: string) => void;
-}) {
-  const [name, setName] = useState(perk?.name ?? "");
-  const [funding, setFunding] = useState(perk?.funding ?? "spend");
-  const [cost, setCost] = useState(perk?.cost_hint != null ? String(perk.cost_hint) : "");
-  const [reason, setReason] = useState("");
+function AttachRewardModal({ level, options, onClose, onDone }: { level: Level; options: RewardPerk[]; onClose: () => void; onDone: () => void }) {
+  const [perk, setPerk] = useState(options[0]?.id ?? "");
   const [busy, setBusy] = useState(false);
-
-  async function save() {
+  const [err, setErr] = useState<string | null>(null);
+  async function go() {
     setBusy(true);
-    const { error } = await supabase.rpc("fn_upsert_perk", {
-      p_id: perk?.id ?? null,
-      p_name: name,
-      p_funding: funding,
-      p_cost_hint: cost === "" ? null : Number(cost),
-      p_reason: reason,
-    });
+    setErr(null);
+    const { error } = await supabase.rpc("fn_admin_attach_perk_level", { p_perk: perk, p_level: level.id, p_reason: "Attached perk to level" });
     setBusy(false);
-    if (error) onError(error.message);
-    else onSaved();
+    if (error) setErr(error.message);
+    else { onDone(); onClose(); }
   }
-
   return (
-    <Modal open onClose={onClose} title={perk ? "Edit perk" : "Add perk"}>
+    <Modal open onClose={onClose} title={`Add reward to ${level.name}`}>
       <div className="space-y-1.5">
-        <Label>Name</Label>
-        <Input value={name} onChange={(e) => setName(e.target.value)} />
-      </div>
-      <div className="space-y-1.5">
-        <Label>Funding</Label>
-        <Select value={funding} onChange={(e) => setFunding(e.target.value)}>
-          <option value="partner">partner</option>
-          <option value="spend">spend</option>
-          <option value="zero">zero</option>
+        <Label>Perk</Label>
+        <Select value={perk} onChange={(e) => setPerk(e.target.value)}>
+          {options.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name} — {p.source}
+            </option>
+          ))}
         </Select>
       </div>
-      <div className="space-y-1.5">
-        <Label>Cost hint (RSD, optional)</Label>
-        <Input type="number" value={cost} onChange={(e) => setCost(e.target.value)} />
-      </div>
-      <div className="space-y-1.5">
-        <Label>Reason</Label>
-        <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="required" />
-      </div>
+      {err && <p className="text-sm text-destructive">⚠️ {err}</p>}
       <div className="flex justify-end gap-2 pt-1">
-        <Button variant="outline" onClick={onClose}>
-          Cancel
-        </Button>
-        <Button disabled={!name || !reason.trim() || busy} onClick={save}>
-          {busy ? "Saving…" : "Save"}
-        </Button>
+        <Button variant="outline" onClick={onClose}>Cancel</Button>
+        <Button disabled={!perk || busy} onClick={go}>{busy ? "Attaching…" : "Attach"}</Button>
       </div>
     </Modal>
   );
@@ -498,5 +319,238 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
       <Label>{label}</Label>
       {children}
     </div>
+  );
+}
+
+type Insight = {
+  total_members: number;
+  xp_per_scan: number | string;
+  levels: { ordinal: number; name: string; threshold_xp: number; members: number; near_up: number }[];
+  perks: { id: string; name: string; funding: string; cost_hint: number | null; is_public: boolean; source: string; level_ordinal: number | null; reach: number; est_cost: number }[];
+};
+
+function InsightSection({ onError }: { onError: (m: string) => void }) {
+  const [d, setD] = useState<Insight | null>(null);
+  const [xp, setXp] = useState("");
+  const [xpReason, setXpReason] = useState("");
+  const [xpBusy, setXpBusy] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const load = useCallback(async () => {
+    const { data, error } = await supabase.rpc("fn_admin_gamification_insight");
+    if (error) onError(error.message);
+    else {
+      const i = data as Insight;
+      setD(i);
+      setXp(String(i.xp_per_scan));
+    }
+  }, [onError]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  async function saveXp() {
+    setXpBusy(true);
+    const { error } = await supabase.rpc("fn_apply_config", {
+      p_key: "gamification.xp_per_scan",
+      p_value: Number(xp),
+      p_reason: xpReason,
+    });
+    setXpBusy(false);
+    if (error) onError(error.message);
+    else {
+      setSaved(true);
+      setXpReason("");
+      setTimeout(() => setSaved(false), 2000);
+      await load();
+    }
+  }
+
+  if (!d) return null;
+  const maxM = Math.max(1, ...d.levels.map((l) => l.members));
+  const spendCost = d.perks.filter((p) => p.funding === "spend").reduce((s, p) => s + Number(p.est_cost), 0);
+
+  return (
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <Card>
+        <CardHeader>
+          <CardTitle>Level distribution</CardTitle>
+          <CardDescription>{d.total_members} members · amber = near the next level</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {d.levels.map((l) => (
+            <div key={l.ordinal} className="flex items-center gap-3 text-sm">
+              <span className="w-28 shrink-0 truncate text-muted-foreground">
+                {l.ordinal}. {l.name}
+              </span>
+              <div className="relative h-4 flex-1 overflow-hidden rounded bg-muted">
+                <div className="h-full bg-primary" style={{ width: `${(l.members / maxM) * 100}%` }} />
+              </div>
+              <span className="tabular w-8 text-right font-medium">{l.members}</span>
+              <span className="tabular w-16 text-right text-xs text-amber-600">{l.near_up > 0 ? `+${l.near_up} near` : ""}</span>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>XP per scan</CardTitle>
+            <CardDescription>How much XP an earning scan carries. Applies to future scans; levels never drop.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-end gap-2">
+              <div className="space-y-1.5">
+                <Label>XP / scan</Label>
+                <Input className="w-24" type="number" value={xp} onChange={(e) => setXp(e.target.value)} />
+              </div>
+              <Input placeholder="Reason" value={xpReason} onChange={(e) => setXpReason(e.target.value)} />
+              <Button size="sm" disabled={!xpReason.trim() || xpBusy} onClick={saveXp}>
+                {saved ? "Saved ✓" : "Save"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Perk reach</CardTitle>
+            <CardDescription>
+              Spend perks cost you (≈ reach × hint); partner/zero don&apos;t. Est. spend exposure:{" "}
+              <span className="font-medium text-foreground">{rsd(spendCost)}</span>
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Perk</TableHead>
+                  <TableHead>Funding</TableHead>
+                  <TableHead className="text-right">Reach</TableHead>
+                  <TableHead className="text-right">Est. cost</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {d.perks.length === 0 ? (
+                  <TableRow>
+                    <TableCell className="text-muted-foreground" colSpan={4}>No perks.</TableCell>
+                  </TableRow>
+                ) : (
+                  d.perks.map((p) => (
+                    <TableRow key={p.id}>
+                      <TableCell className="font-medium">
+                        {p.name}
+                        <span className="ml-1 text-xs text-muted-foreground">
+                          · {p.source}
+                          {p.is_public ? " · public" : p.level_ordinal == null ? " · unattached" : ` · L${p.level_ordinal}`}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <Badge tone={fundingTone(p.funding)}>{p.funding}</Badge>
+                      </TableCell>
+                      <TableCell className="tabular text-right">{p.reach}</TableCell>
+                      <TableCell className="tabular text-right">{p.funding === "spend" ? rsd(p.est_cost) : "—"}</TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+// Small audited reason prompt (replaces window.prompt for deletes / unmaps).
+function ReasonModal({
+  title,
+  confirmLabel,
+  destructive,
+  run,
+  onClose,
+  onDone,
+}: {
+  title: string;
+  confirmLabel: string;
+  destructive?: boolean;
+  run: (reason: string) => Promise<{ error: { message: string } | null }>;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  async function go() {
+    setBusy(true);
+    setErr(null);
+    const { error } = await run(reason);
+    setBusy(false);
+    if (error) setErr(error.message);
+    else {
+      onDone();
+      onClose();
+    }
+  }
+  return (
+    <Modal open onClose={onClose} title={title}>
+      <div className="space-y-1.5">
+        <Label>Reason (required — audited)</Label>
+        <Input value={reason} onChange={(e) => setReason(e.target.value)} />
+      </div>
+      {err && <p className="text-sm text-destructive">⚠️ {err}</p>}
+      <div className="flex justify-end gap-2 pt-1">
+        <Button variant="outline" onClick={onClose}>Cancel</Button>
+        <Button variant={destructive ? "destructive" : "default"} disabled={!reason.trim() || busy} onClick={go}>
+          {busy ? "Working…" : confirmLabel}
+        </Button>
+      </div>
+    </Modal>
+  );
+}
+
+function ConfirmModal({
+  title,
+  body,
+  confirmLabel,
+  destructive,
+  run,
+  onClose,
+  onDone,
+}: {
+  title: string;
+  body?: string;
+  confirmLabel: string;
+  destructive?: boolean;
+  run: () => Promise<{ error: { message: string } | null }>;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  async function go() {
+    setBusy(true);
+    setErr(null);
+    const { error } = await run();
+    setBusy(false);
+    if (error) setErr(error.message);
+    else {
+      onDone();
+      onClose();
+    }
+  }
+  return (
+    <Modal open onClose={onClose} title={title}>
+      {body && <p className="text-sm text-muted-foreground">{body}</p>}
+      {err && <p className="text-sm text-destructive">⚠️ {err}</p>}
+      <div className="flex justify-end gap-2 pt-1">
+        <Button variant="outline" onClick={onClose}>Cancel</Button>
+        <Button variant={destructive ? "destructive" : "default"} disabled={busy} onClick={go}>
+          {busy ? "Working…" : confirmLabel}
+        </Button>
+      </div>
+    </Modal>
   );
 }
