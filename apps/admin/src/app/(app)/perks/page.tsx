@@ -4,7 +4,7 @@ import { Plus } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
-import { PerkModal, type PerkLite } from "@/components/perk-modal";
+import { type PerkLite } from "@/components/perk-modal";
 import { PageHeader } from "@/components/page-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -24,13 +24,11 @@ export default function PerksPage() {
   const [fperks, setFperks] = useState<PerkLite[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [editingPartner, setEditingPartner] = useState<Partner | "new" | null>(null);
-  const [editingPerk, setEditingPerk] = useState<PerkLite | "new" | null>(null);
-  const [delPerk, setDelPerk] = useState<PerkLite | null>(null);
 
   const load = useCallback(async () => {
     const [pt, pk] = await Promise.all([
       supabase.rpc("fn_admin_list_partners"),
-      supabase.from("perks").select("id,name,benefit,funding,cost_hint,is_public,level_id").is("partner_id", null).order("name"),
+      supabase.from("perks").select("id,name,benefit,funding,cost_hint,is_public,level_id,code").is("partner_id", null).order("name"),
     ]);
     if (pt.error) setError(pt.error.message);
     else setPartners((pt.data as Partner[]) ?? []);
@@ -44,20 +42,19 @@ export default function PerksPage() {
 
   return (
     <>
-      <PageHeader title="Perks" subtitle="Create FluoFit's own perks and partner perks. Level rewards are attached in Gamification." />
+      <PageHeader title="Perks" subtitle="FluoFit perks are built into the system; partner perks are managed here. Level rewards are attached in Gamification." />
       {error && <p className="mb-4 text-sm text-destructive">⚠️ {error}</p>}
 
       <div className="space-y-6">
         {/* FluoFit perks */}
         <Card>
-          <CardHeader className="flex-row items-center justify-between space-y-0">
-            <div>
-              <CardTitle>FluoFit perks</CardTitle>
-              <CardDescription>FluoFit-funded (spend/zero). Always level rewards — attach them to a Level in Gamification.</CardDescription>
-            </div>
-            <Button size="sm" onClick={() => setEditingPerk("new")}>
-              <Plus /> Add perk
-            </Button>
+          <CardHeader>
+            <CardTitle>FluoFit perks</CardTitle>
+            <CardDescription>
+              Each FluoFit perk (e.g. free shipping, a free box with the next order) is built and integrated into
+              the system, so this list is read-only — new ones are added by the team once wired. You assign them to
+              a Level in Gamification.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
@@ -66,14 +63,13 @@ export default function PerksPage() {
                   <TableHead>Name</TableHead>
                   <TableHead>Benefit</TableHead>
                   <TableHead>Funding</TableHead>
-                  <TableHead>Availability</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>Level reward</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {fperks.length === 0 ? (
                   <TableRow>
-                    <TableCell className="text-muted-foreground" colSpan={5}>No FluoFit perks yet.</TableCell>
+                    <TableCell className="text-muted-foreground" colSpan={4}>No FluoFit perks yet.</TableCell>
                   </TableRow>
                 ) : (
                   fperks.map((p) => (
@@ -84,11 +80,7 @@ export default function PerksPage() {
                         <Badge tone={fundingTone(p.funding)}>{p.funding}</Badge>
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {p.is_public ? "Public" : p.level_id ? "Level reward · attached" : "Level reward · unattached"}
-                      </TableCell>
-                      <TableCell className="space-x-2 text-right">
-                        <button className="text-xs font-medium text-primary hover:underline" onClick={() => setEditingPerk(p)}>Edit</button>
-                        <button className="text-xs font-medium text-destructive hover:underline" onClick={() => setDelPerk(p)}>Delete</button>
+                        {p.level_id ? "attached" : "unattached"}
                       </TableCell>
                     </TableRow>
                   ))
@@ -151,41 +143,10 @@ export default function PerksPage() {
         </Card>
       </div>
 
-      {editingPerk && (
-        <PerkModal perk={editingPerk === "new" ? null : editingPerk} partnerId={null} onClose={() => setEditingPerk(null)} onSaved={() => { setEditingPerk(null); void load(); }} />
-      )}
-      {delPerk && <DeletePerkModal perk={delPerk} onClose={() => setDelPerk(null)} onDone={load} />}
       {editingPartner && (
         <PartnerModal partner={editingPartner === "new" ? null : editingPartner} onClose={() => setEditingPartner(null)} onSaved={() => { setEditingPartner(null); void load(); }} onError={setError} />
       )}
     </>
-  );
-}
-
-function DeletePerkModal({ perk, onClose, onDone }: { perk: { id: string; name: string }; onClose: () => void; onDone: () => void }) {
-  const [reason, setReason] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-  async function go() {
-    setBusy(true);
-    setErr(null);
-    const { error } = await supabase.rpc("fn_delete_perk", { p_id: perk.id, p_reason: reason });
-    setBusy(false);
-    if (error) setErr(error.message);
-    else { onDone(); onClose(); }
-  }
-  return (
-    <Modal open onClose={onClose} title={`Delete "${perk.name}"`}>
-      <div className="space-y-1.5">
-        <Label>Reason (audited)</Label>
-        <Input value={reason} onChange={(e) => setReason(e.target.value)} />
-      </div>
-      {err && <p className="text-sm text-destructive">⚠️ {err}</p>}
-      <div className="flex justify-end gap-2 pt-1">
-        <Button variant="outline" onClick={onClose}>Cancel</Button>
-        <Button variant="destructive" disabled={!reason.trim() || busy} onClick={go}>{busy ? "Deleting…" : "Delete perk"}</Button>
-      </div>
-    </Modal>
   );
 }
 
